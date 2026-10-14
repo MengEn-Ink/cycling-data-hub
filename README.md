@@ -3,6 +3,9 @@
 把你的 **Strava** 骑行数据做成一本可翻页的交互式照片画册，一年一本。电脑端双页展开，
 手机端自动切换单页；点击画册左/右区域可前后翻页，也支持拖动、方向键和月份跳转。
 
+> 📖 **在线画册（2026）**：<https://mengen-ink.github.io/strava-photobook-2026/>
+> 源码仓库：<https://github.com/MengEn-Ink/strava-photobook-2026>
+
 响应式与阅读友好：窄屏（≤700px）自动折为单页并加宽文字栏、放大触控按钮（≥46px）、
 适配刘海/底部安全区；正文用容器相对单位（cqw），无论页面大小字号都等比、清晰。
 
@@ -16,7 +19,7 @@
 - **照片画廊**：从 Strava 下载骑行照片。竖图满屏且零文字遮挡；横图完整显示，标题、日期、里程、爬升和照片说明放在独立信息区。
 
 视觉默认采用干净的**黑白橙编辑风**，并内置 18 组撞色，共 19 种主题。海报封面、年度总结、
-路线热力图和控制区会一起换色；点击顶栏“主题”即可即时切换并自动保存。
+路线热力图和控制区会一起换色；点击浮在书页上的“主题”按钮即可即时切换并自动保存。
 
 > 翻页运行时改编自 MIT 许可的
 > [create-photo-flipbook-ui](https://github.com/HaichaoLihc/create-photo-flipbook-ui)。
@@ -134,7 +137,7 @@ strava-photobook/
 
 ### 换主题
 
-打开画册后点击顶栏“主题”，从双色色板中选择。默认是“黑白橙（默认）”；选择不会改变
+打开画册后点击浮在书页上的“主题”按钮，从双色色板中选择。默认是“黑白橙（默认）”；选择不会改变
 当前页，并会自动保存到浏览器的 `strava-photobook.theme`。要恢复默认，重新选择“黑白橙
 （默认）”，也可以在浏览器开发者工具中清除这个 localStorage 键。
 
@@ -157,9 +160,23 @@ cd books/<年份> && node --test html-contract.test.mjs
 
 ## 每晚自动更新
 
-仓库内的 `.github/workflows/nightly-photobook.yml` 每天北京时间 **21:00** 自动拉取
-Strava 最新活动、重建当年画册并更新 GitHub Pages；也支持在 Actions 页面通过
-`workflow_dispatch` 手动运行。GitHub 的 cron 使用 UTC，因此配置为 `0 13 * * *`。
+`.github/workflows/nightly-photobook.yml` 每天北京时间 **21:00** 自动运行，也可在 Actions
+页面通过 `workflow_dispatch` 手动触发。GitHub 的 cron 使用 UTC，因此配置为 `0 13 * * *`。
+同一时刻只保留一个运行：后触发的会取消仍在进行的旧运行（`concurrency: cancel-in-progress`）。
+
+每次运行按以下步骤执行：
+
+1. **选年份**：按 `Asia/Shanghai` 时区取当前年份，只构建当年画册。
+2. **恢复线上基线**：把 `gh-pages` 分支检出到临时 worktree，并将现有照片拷入本地
+   `data/photo-cache`——既作为照片下载缓存，也作为发布前的回归对比基线。
+3. **拉取当年活动**：执行 `fetch --year <年份>`。若撞上 Strava 限流（每 15 分钟一个固定
+   配额窗口），会等待到下一个窗口后自动重试一次。
+4. **构建画册**：`build <年份>` 重新生成当年静态画册。
+5. **发布前校验**：依次运行 Python 单测、运行时与画册的 Node 契约测试、布局门禁、照片
+   布局门禁，以及对照线上基线的 `validate_release`（校验画册标记、封面 / 年度总结 / 热力图、
+   无空白衬页与内部页码、资源齐全、照片数无显著回落）。任一失败即中止，旧页面保持不变。
+6. **原子发布**：全部通过后，用临时 worktree 清空 `gh-pages` 旧内容并拷入新画册；没有变化
+   则不产生提交，有变化才提交 `Publish nightly Strava photobook` 并推送，Pages 随之更新。
 
 首次启用时，在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 创建：
 
@@ -168,10 +185,10 @@ Strava 最新活动、重建当年画册并更新 GitHub Pages；也支持在 Ac
 - `STRAVA_REFRESH_TOKEN`：执行本地 `auth` 后 `.env` 中的刷新令牌
 - `SECRETS_ADMIN_TOKEN`：能管理本仓库 Actions Secrets 并推送分支的 GitHub token
 
-工作流会先恢复当前线上照片作为本地缓存，再拉取和构建；若新画册照片数低于线上版本、
-存在空白衬页、缺失资源或内部页码，发布会停止，旧页面保持不变。Strava 刷新令牌发生
-轮换时会立即回写 `STRAVA_REFRESH_TOKEN`。需要暂停时，在 Actions 中禁用
-**Nightly photobook refresh** 工作流即可。
+照片数允许在发布基线的 **5% 容差**内随 Strava 数据自然浮动（如 40→39 仍发布），只有明显
+回落（如 40→37）才判定为内容回归并拦截发布，旧页面保持不变。Strava 刷新令牌每次轮换后
+都会立即回写到 `STRAVA_REFRESH_TOKEN`（限流重试成功后也会再回写一次），避免长期运行后
+令牌过期。需要暂停时，在 Actions 中禁用 **Nightly photobook refresh** 工作流即可。
 
 ## 隐私
 
