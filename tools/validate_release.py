@@ -10,6 +10,11 @@ class ValidationError(RuntimeError):
     pass
 
 
+# Strava 每晚返回的可用照片会随单条活动照片的增减轻微浮动；
+# 仅在照片数跌破发布基线的一个小相对容差时，才判定为真正的内容回归。
+PHOTO_REGRESSION_TOLERANCE = 0.05
+
+
 def _inspect(book: Path) -> tuple[str, list[str]]:
     index = book / "index.html"
     if not index.is_file():
@@ -53,8 +58,11 @@ def validate_release(
             source for source in old_images
             if source.startswith("assets/photos/") and "athlete" not in source
         })
-        if baseline_photos and photos < min(baseline_photos, 40):
-            errors.append(f"photo count regressed: {photos} < {min(baseline_photos, 40)}")
+        if baseline_photos:
+            floor_photos = min(baseline_photos, 40)
+            allowed_photos = floor_photos - int(floor_photos * PHOTO_REGRESSION_TOLERANCE)
+            if photos < allowed_photos:
+                errors.append(f"photo count regressed: {photos} < {allowed_photos}")
     if errors:
         raise ValidationError("; ".join(errors))
     return {"photos": photos, "baseline_photos": baseline_photos}

@@ -43,6 +43,22 @@ class ReleaseValidationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "photo count regressed"):
                 validate_release(candidate, baseline)
 
+    def test_accepts_small_photo_count_fluctuation_within_tolerance(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            baseline = write_book(root / "old", 40)
+            candidate = write_book(root / "new", 39)
+            result = validate_release(candidate, baseline)
+            self.assertEqual(result["photos"], 39)
+
+    def test_rejects_photo_drop_beyond_tolerance(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            baseline = write_book(root / "old", 40)
+            candidate = write_book(root / "new", 37)
+            with self.assertRaisesRegex(ValidationError, r"photo count regressed: 37 < 38"):
+                validate_release(candidate, baseline)
+
     def test_reused_cover_photo_counts_once(self):
         with tempfile.TemporaryDirectory() as raw:
             candidate = write_book(Path(raw), 2, extras='<img src="assets/photos/0.jpg">')
