@@ -103,10 +103,17 @@ def _save_photo(raw: bytes, dest: Path, max_edge: int) -> bool | None:
         return None
 
 
-def _cached_photos(cfg: Config, act: Activity, photos_dir: Path, limit: int) -> list[Photo]:
-    cache_dir = cfg.data_dir / "photo-cache"
+def _cached_photos(cfg: Config, act: Activity, photos_dir: Path, limit: int,
+                   *, have: set[str] | None = None) -> list[Photo]:
+    """Copy cached photos until the activity reaches `limit`, skipping `have`."""
+    have = have or set()
+    base = len(have)  # photos already attached before this top-up call
     cached: list[Photo] = []
-    for source in sorted(cache_dir.glob(f"{act.id}-*.jpg"))[:limit]:
+    for source in sorted((cfg.data_dir / "photo-cache").glob(f"{act.id}-*.jpg")):
+        if base + len(cached) >= limit:
+            break
+        if source.name in have:
+            continue
         dest = photos_dir / source.name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, dest)
@@ -115,20 +122,27 @@ def _cached_photos(cfg: Config, act: Activity, photos_dir: Path, limit: int) -> 
                 landscape = image.width >= image.height * 1.15
         except Exception:  # noqa: BLE001
             continue
-        cached.append(Photo(f"assets/photos/{source.name}", landscape=landscape))
+        photo = Photo(f"assets/photos/{source.name}", landscape=landscape)
+        cached.append(photo)
+        have.add(source.name)
     return cached
 
 
 def hydrate_activity(cfg: Config, client: StravaClient, act: Activity,
-                     photos_dir: Path, max_photos: int) -> None:
+                     photos_dir: Path, max_photos: int, *, with_detail: bool = True) -> None:
     """Download an activity's photos, pull PR segments and refresh companions.
 
     The summary list often reports athlete_count=1 even for group rides; the
     real value (and the full description) live in the activity detail, so we
     fetch detail for rides that have PRs or photos and correct it in place.
+
+    Idempotent / re-entrant: callers can hydrate a base quota first and later
+    raise `max_photos`. Photos already attached (by index name) are never
+    downloaded or appended twice. Pass with_detail=False on those top-up calls
+    to avoid a redundant activity-detail request.
     """
     act.description = clean_description(act.meta.get("description") or "")
-    if act.pr_count > 0 or act.photo_count > 0:
+    if with_detail and (act.pr_count > 0 or act.photo_count > 0):
         try:
             detail = client.activity_detail(act.id)
             act.description = act.description or clean_description(
@@ -146,8 +160,9 @@ def hydrate_activity(cfg: Config, client: StravaClient, act: Activity,
             ]
         except Exception:  # noqa: BLE001
             pass
-    # photos
+    # photos — re-entrant: skip indexes already attached, fill up to max_photos
     if act.photo_count > 0 and max_photos > 0:
+        have = {Path(p.web_path).name for p in act.photos}
         try:
             objs = client.activity_photos(act.id, size=cfg.max_photo_edge)
         except Exception:  # noqa: BLE001
@@ -155,6 +170,11 @@ def hydrate_activity(cfg: Config, client: StravaClient, act: Activity,
         import requests
 
         for i, obj in enumerate(objs[:max_photos]):
+            if len(act.photos) >= max_photos:
+                break
+            name = f"{act.id}-{i:02d}.jpg"
+            if name in have:
+                continue
             urls = obj.get("urls") or {}
             url = urls.get(str(cfg.max_photo_edge)) or (list(urls.values())[0] if urls else None)
             if not url:
@@ -165,7 +185,6 @@ def hydrate_activity(cfg: Config, client: StravaClient, act: Activity,
                     continue
             except requests.RequestException:
                 continue
-            name = f"{act.id}-{i:02d}.jpg"
             landscape = _save_photo(resp.content, photos_dir / name, cfg.max_photo_edge)
             if landscape is None:
                 continue
@@ -176,11 +195,14 @@ def hydrate_activity(cfg: Config, client: StravaClient, act: Activity,
                     landscape=landscape,
                 )
             )
+            have.add(name)
             cache = cfg.data_dir / "photo-cache" / name
             cache.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(photos_dir / name, cache)
-        if not act.photos:
-            act.photos.extend(_cached_photos(cfg, act, photos_dir, max_photos))
+        if len(act.photos) < max_photos:
+            act.photos.extend(
+                _cached_photos(cfg, act, photos_dir, max_photos, have=have)
+            )
 
 
 def make_client(cfg: Config) -> StravaClient:

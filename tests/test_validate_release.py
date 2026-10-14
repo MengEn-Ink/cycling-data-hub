@@ -5,7 +5,9 @@ from pathlib import Path
 from tools.validate_release import ValidationError, validate_release
 
 
-def write_book(root: Path, photo_count: int, *, extras: str = "", heatmap: bool = True) -> Path:
+def write_book(
+    root: Path, photo_count: int, *, extras: str = "", heatmap: bool = True, target: int = 0
+) -> Path:
     book = root / "book"
     photos = book / "assets" / "photos"
     photos.mkdir(parents=True)
@@ -14,8 +16,9 @@ def write_book(root: Path, photo_count: int, *, extras: str = "", heatmap: bool 
         name = f"{index}.jpg"
         (photos / name).write_bytes(b"jpg")
         tags.append(f'<img src="assets/photos/{name}">')
+    target_attr = f' data-photo-target="{target}"' if target else ""
     (book / "index.html").write_text(
-        '<html data-strava-photobook="1"><nav id="month-timeline"></nav>'
+        f'<html data-strava-photobook="1"{target_attr}><nav id="month-timeline"></nav>'
         + '<article data-cover-mode="photo"></article>'
         + '<article data-year-review="declaration"></article>'
         + '<article data-year-review="rhythm"></article>'
@@ -58,6 +61,27 @@ class ReleaseValidationTests(unittest.TestCase):
             candidate = write_book(root / "new", 37)
             with self.assertRaisesRegex(ValidationError, r"photo count regressed: 37 < 38"):
                 validate_release(candidate, baseline)
+
+    def test_dynamic_book_is_judged_against_its_own_target(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            # Previous fixed release shipped 100; the new dynamic target is 40.
+            baseline = write_book(root / "old", 100)
+            candidate = write_book(root / "new", 40, target=40)
+            result = validate_release(candidate, baseline)
+            self.assertEqual(result["photo_target"], 40)
+            self.assertEqual(result["photos"], 40)
+
+    def test_dynamic_book_accepts_up_to_ten_percent_shortfall(self):
+        with tempfile.TemporaryDirectory() as raw:
+            candidate = write_book(Path(raw), 36, target=40)  # ceil(40*0.9) == 36
+            self.assertEqual(validate_release(candidate)["photos"], 36)
+
+    def test_dynamic_book_rejects_when_target_is_unmet(self):
+        with tempfile.TemporaryDirectory() as raw:
+            candidate = write_book(Path(raw), 35, target=40)
+            with self.assertRaisesRegex(ValidationError, r"photo count below target: 35 < 36"):
+                validate_release(candidate)
 
     def test_reused_cover_photo_counts_once(self):
         with tempfile.TemporaryDirectory() as raw:

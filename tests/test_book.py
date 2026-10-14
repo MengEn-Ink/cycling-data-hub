@@ -1,12 +1,76 @@
+import re
+import tempfile
 import unittest
+from collections import Counter
+from pathlib import Path
 
 from strava_photobook import book
 from strava_photobook.book import (
     _activity_photo_page, _cover, _document, _feature_page, _frame_pages, _heatmap_page,
     _year_declaration_page, _year_rhythm_page,
 )
+from strava_photobook.config import Config, GitHubConfig, StravaCreds
 from strava_photobook.editorial import CoverSelection, build_year_review
 from strava_photobook.model import Activity, Highlight, Photo
+
+BLEED_PAGE = re.compile(
+    r'class="book-page art-page bleed (?:recto|verso)" data-activity-id="([^"]+)"'
+)
+PHOTO_TARGET = re.compile(r'data-photo-target="(\d+)"')
+POLYLINE = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+
+
+class DynamicBuildTests(unittest.TestCase):
+    def _build(self, n=30, per=10, **cfg_overrides):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name)
+        runtime = root / "runtime"
+        runtime.mkdir()
+        cfg = Config(
+            root, root / "data", root / "books", runtime,
+            StravaCreds(), GitHubConfig(), **cfg_overrides,
+        )
+        activities = [
+            Activity(
+                id=str(1000 + i), name=f"Ride {i}",
+                date=f"2026-{((i % 12) + 1):02d}-{(i % 27) + 1:02d}T08:00:00Z",
+                year="2026", kudos=i, distance_km=20 + i, elev_m=100 + i,
+                moving_time=3600, photo_count=per, polyline=POLYLINE,
+                description="story" if i % 3 == 0 else "",
+            )
+            for i in range(n)
+        ]
+
+        def fake_hydrate(act, photos_dir, limit, with_detail=True):
+            want = min(limit, act.photo_count)
+            while len(act.photos) < want:
+                k = len(act.photos)
+                act.photos.append(Photo(f"assets/photos/{act.id}-{k:02d}.jpg", landscape=(k % 2 == 1)))
+
+        out = book.build_year(cfg, "2026", activities, fake_hydrate)
+        return (out / "index.html").read_text(encoding="utf-8")
+
+    def test_rich_year_grows_up_to_cap_without_flooding_one_ride(self):
+        html = self._build(n=30, per=10)  # 300 uploads -> 60% capped at 120
+
+        per_activity = Counter(BLEED_PAGE.findall(html))
+        self.assertEqual(sum(per_activity.values()), 120)
+        self.assertEqual(PHOTO_TARGET.search(html).group(1), "120")
+        self.assertTrue(all(count <= 6 for count in per_activity.values()))
+        self.assertGreaterEqual(len(per_activity), 20)  # spread across many rides
+
+    def test_explicit_override_pins_the_count(self):
+        html = self._build(photos_per_book=10)
+
+        self.assertEqual(len(BLEED_PAGE.findall(html)), 10)
+        self.assertEqual(PHOTO_TARGET.search(html).group(1), "10")
+
+    def test_sparse_year_is_not_inflated_to_the_floor(self):
+        html = self._build(n=2, per=3)  # only 6 uploads exist
+
+        self.assertEqual(len(BLEED_PAGE.findall(html)), 6)
+        self.assertEqual(PHOTO_TARGET.search(html).group(1), "6")
 
 
 class BookRenderingTests(unittest.TestCase):

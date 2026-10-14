@@ -13,6 +13,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from .model import MAX_PHOTOS_PER_RIDE, PHOTO_CAP, PHOTO_FLOOR, PHOTO_RATIO
+
 
 def _load_dotenv(path: Path) -> None:
     """读取极简 .env（KEY=VALUE），不覆盖已存在的真实环境变量。"""
@@ -66,9 +68,16 @@ class Config:
     github: GitHubConfig
     # 调优项（可用环境变量覆盖）
     max_photo_edge: int = 1600
-    photos_per_book: int = 40
+    # None = 照片数按当年上传量动态决定（见 model.target_photo_count）；
+    # 显式设置 PHOTOBOOK_PHOTOS_PER_BOOK 时作为强制固定值（逃生舱）。
+    photos_per_book: int | None = None
     feature_rides: int = 6
     request_pause: float = 1.0
+    # 动态照片数护栏（仅在 photos_per_book 为 None 时生效）
+    photo_ratio: float = 0.60
+    photo_floor: int = 40
+    photo_cap: int = 120
+    max_photos_per_ride: int = 6
 
     @classmethod
     def load(cls, root: str | Path | None = None) -> "Config":
@@ -84,6 +93,18 @@ class Config:
                 return int(os.getenv(env, default))
             except ValueError:
                 return default
+
+        def _float(env: str, default: float) -> float:
+            try:
+                return float(os.getenv(env, default))
+            except ValueError:
+                return default
+
+        fixed_raw = os.getenv("PHOTOBOOK_PHOTOS_PER_BOOK", "").strip()
+        try:
+            photos_per_book = int(fixed_raw) if fixed_raw and int(fixed_raw) > 0 else None
+        except ValueError:
+            photos_per_book = None
 
         return cls(
             root=root,
@@ -102,8 +123,12 @@ class Config:
                 upload_limit_bytes=_int("GITHUB_UPLOAD_LIMIT_BYTES", 50 * 1024 * 1024),
             ),
             max_photo_edge=_int("PHOTOBOOK_MAX_PHOTO_EDGE", 1600),
-            photos_per_book=_int("PHOTOBOOK_PHOTOS_PER_BOOK", 40),
+            photos_per_book=photos_per_book,
             feature_rides=_int("PHOTOBOOK_FEATURE_RIDES", 6),
+            photo_ratio=_float("PHOTOBOOK_PHOTO_RATIO", PHOTO_RATIO),
+            photo_floor=_int("PHOTOBOOK_PHOTO_FLOOR", PHOTO_FLOOR),
+            photo_cap=_int("PHOTOBOOK_PHOTO_CAP", PHOTO_CAP),
+            max_photos_per_ride=_int("PHOTOBOOK_MAX_PHOTOS_PER_RIDE", MAX_PHOTOS_PER_RIDE),
         )
 
     @property

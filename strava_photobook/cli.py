@@ -77,8 +77,10 @@ def _cmd_build(cfg: Config, args) -> None:
     acts = source.load_activities(cfg)
     client = source.make_client(cfg)
 
-    def hydrate(a, photos_dir, remaining):
-        source.hydrate_activity(cfg, client, a, photos_dir, remaining)
+    def hydrate(a, photos_dir, remaining, with_detail=True):
+        source.hydrate_activity(
+            cfg, client, a, photos_dir, remaining, with_detail=with_detail
+        )
 
     def avatar_fetcher(photos_dir):
         return source.fetch_athlete_avatar(client, photos_dir)

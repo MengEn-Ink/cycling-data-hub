@@ -6,12 +6,23 @@
 from __future__ import annotations
 
 import html
+import math
 import shutil
 from pathlib import Path
 
 from .config import Config
 from .editorial import CoverSelection, YearReview, build_year_review, select_cover
-from .model import Activity, Highlight, by_year, select_editorial_highlights
+from .model import (
+    FEATURE_PHOTO_QUOTA,
+    GALLERY_PHOTO_QUOTA,
+    MAX_CANDIDATE_RIDES,
+    Activity,
+    Highlight,
+    by_year,
+    plan_photo_quotas,
+    select_editorial_highlights,
+    target_photo_count,
+)
 from .route import route_heatmap_svg, route_svg
 from .theme import FEATURE_CSS, THEME_CSS
 
@@ -266,9 +277,10 @@ def _month_timeline(body: str) -> str:
     return f'<nav id="month-timeline" class="month-timeline" aria-label="按月份浏览">{buttons}</nav>'
 
 
-def _document(year: str, body: str) -> str:
+def _document(year: str, body: str, *, photo_target: int = 0) -> str:
+    target_attr = f' data-photo-target="{photo_target}"' if photo_target else ""
     return f"""<!doctype html>
-<html lang="zh-CN" data-strava-photobook="1">
+<html lang="zh-CN" data-strava-photobook="1"{target_attr}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -404,31 +416,69 @@ def build_year(cfg: Config, year: str, activities: list[Activity], hydrate,
     avatar = avatar_fetcher(photos_dir) if avatar_fetcher else None
     stats = _stats(ya)
 
-    activity_pages: list[str] = []
+    # 动态目标：跟随当年上传照片数增长，受下限/上限护栏约束；显式固定值优先。
+    total_photos = sum(a.photo_count for a in ya)
+    target = cfg.photos_per_book or target_photo_count(
+        total_photos, ratio=cfg.photo_ratio, floor=cfg.photo_floor, cap=cfg.photo_cap
+    )
 
-    side = ["recto", "verso"]
-    used = 0
-    # Hydrate a bounded, photo-led shortlist so description and detail signals
-    # participate in final editorial ranking without exhausting API quota.
-    candidates = sorted(ya, key=lambda a: (a.photo_count > 0, a.kudos, a.pr_count), reverse=True)[:24]
+    # 候选活动要足以承载目标张数，同时封顶以尊重 Strava 限流预算。
+    reserve = cfg.feature_rides * cfg.max_photos_per_ride
+    needed = cfg.feature_rides + max(0, math.ceil((target - reserve) / GALLERY_PHOTO_QUOTA))
+    candidate_limit = min(MAX_CANDIDATE_RIDES, max(24, needed))
+    candidates = sorted(
+        ya, key=lambda a: (a.photo_count > 0, a.kudos, a.pr_count), reverse=True
+    )[:candidate_limit]
+
+    # 第一轮：拉详情（让描述/同行/PR 进入评分），照片先取画廊基础配额。
     for a in candidates:
-        hydrate(a, photos_dir, min(2, a.photo_count))
+        hydrate(a, photos_dir, min(GALLERY_PHOTO_QUOTA, a.photo_count))
     highlights = select_editorial_highlights(candidates, cfg.feature_rides)
     featured_ids = {highlight.activity.id for highlight in highlights}
     gallery = select_editorial_highlights(
         [x for x in candidates if x.id not in featured_ids], len(candidates)
     )
+    ordered = [highlight.activity for highlight in highlights] + [
+        highlight.activity for highlight in gallery
+        if highlight.activity.id not in featured_ids
+    ]
+    # 高光加权分配：feature 起步更多，剩余名额再按精彩度逐张补足。
+    quotas = plan_photo_quotas(
+        ordered, featured_ids, target,
+        feature_quota=FEATURE_PHOTO_QUOTA, gallery_quota=GALLERY_PHOTO_QUOTA,
+        per_ride_cap=cfg.max_photos_per_ride,
+    )
+    # 第二轮：仅对需要超出基础配额的活动增量补片，不重复拉详情。
+    for a in ordered:
+        want = quotas.get(a.id, 0)
+        if want > len(a.photos):
+            hydrate(a, photos_dir, want, False)
+
+    activity_pages: list[str] = []
+
+    side = ["recto", "verso"]
+    used = 0
     for highlight, is_featured in _chronological_activity_blocks(highlights, gallery):
         a = highlight.activity
         if is_featured:
             activity_pages.append(_feature_page(side[len(activity_pages) % 2], highlight, avatar))
-        for ph in a.photos[:2]:
-            if used >= cfg.photos_per_book:
+        for ph in a.photos[: quotas.get(a.id, 0)]:
+            if used >= target:
                 break
             activity_pages.append(_activity_photo_page(side[len(activity_pages) % 2], highlight, ph, str(used + 1)))
             used += 1
+        if used >= target:
+            break
 
+    # 计划产出（已扣除活动自身照片数与候选池上限），作为发布门禁的达成目标。
+    planned_target = min(target, sum(quotas.values()))
     pages = _frame_pages(year, stats, activity_pages, ya, select_cover(candidates))
-    (out / "index.html").write_text(_document(year, "\n        ".join(pages)), encoding="utf-8")
-    print(f"built {out}  pages={len(pages)} photos={used}")
+    (out / "index.html").write_text(
+        _document(year, "\n        ".join(pages), photo_target=planned_target),
+        encoding="utf-8",
+    )
+    print(
+        f"built {out}  pages={len(pages)} photos={used}/{planned_target} "
+        f"uploads={total_photos}"
+    )
     return out

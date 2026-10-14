@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import re
 from pathlib import Path
 
@@ -10,9 +11,11 @@ class ValidationError(RuntimeError):
     pass
 
 
-# Strava 每晚返回的可用照片会随单条活动照片的增减轻微浮动；
-# 仅在照片数跌破发布基线的一个小相对容差时，才判定为真正的内容回归。
+# 旧的固定 40 张画册：照片数仅在跌破发布基线的一个小相对容差时才算回归。
 PHOTO_REGRESSION_TOLERANCE = 0.05
+# 动态画册（HTML 声明 data-photo-target）：实际入册至少要达成目标的 90%，
+# 容忍个别照片下载失败；目标本身随 Strava 上传量增删，故不再与线上基线比较。
+PHOTO_TARGET_FULFILLMENT = 0.90
 
 
 def _inspect(book: Path) -> tuple[str, list[str]]:
@@ -51,6 +54,8 @@ def validate_release(
         if not (book / source).is_file():
             errors.append(f"missing asset: {source}")
     photos = len({source for source in images if source.startswith("assets/photos/") and "athlete" not in source})
+    target_match = re.search(r'data-photo-target="(\d+)"', html)
+    photo_target = int(target_match.group(1)) if target_match else 0
     baseline_photos = 0
     if baseline and (Path(baseline) / "index.html").is_file():
         _, old_images = _inspect(Path(baseline))
@@ -58,14 +63,21 @@ def validate_release(
             source for source in old_images
             if source.startswith("assets/photos/") and "athlete" not in source
         })
-        if baseline_photos:
-            floor_photos = min(baseline_photos, 40)
-            allowed_photos = floor_photos - int(floor_photos * PHOTO_REGRESSION_TOLERANCE)
-            if photos < allowed_photos:
-                errors.append(f"photo count regressed: {photos} < {allowed_photos}")
+    if photo_target:
+        # Dynamic book: must mostly fulfill the target it was built for, not
+        # the previous release — uploads legitimately grow or shrink year round.
+        needed = math.ceil(photo_target * PHOTO_TARGET_FULFILLMENT)
+        if photos < needed:
+            errors.append(f"photo count below target: {photos} < {needed}")
+    elif baseline_photos:
+        # Legacy fixed-size book (no data-photo-target): keep baseline guard.
+        floor_photos = min(baseline_photos, 40)
+        allowed_photos = floor_photos - int(floor_photos * PHOTO_REGRESSION_TOLERANCE)
+        if photos < allowed_photos:
+            errors.append(f"photo count regressed: {photos} < {allowed_photos}")
     if errors:
         raise ValidationError("; ".join(errors))
-    return {"photos": photos, "baseline_photos": baseline_photos}
+    return {"photos": photos, "baseline_photos": baseline_photos, "photo_target": photo_target}
 
 
 def main() -> None:
@@ -75,7 +87,10 @@ def main() -> None:
     parser.add_argument("--require-heatmap", action="store_true")
     args = parser.parse_args()
     result = validate_release(args.book, args.baseline, require_heatmap=args.require_heatmap)
-    print(f"release valid: photos={result['photos']} baseline={result['baseline_photos']}")
+    print(
+        f"release valid: photos={result['photos']} target={result['photo_target']} "
+        f"baseline={result['baseline_photos']}"
+    )
 
 
 if __name__ == "__main__":

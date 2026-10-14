@@ -158,3 +158,72 @@ def select_editorial_highlights(year_acts: list[Activity], limit: int = 6) -> li
             if len(selected) >= limit:
                 return selected
     return selected
+
+
+# ---- dynamic photo planning ------------------------------------------------
+#
+# 照片数量随当年上传量增长，但用护栏约束画册长度、体积与构建时长。
+# 单张照片在 Strava API 里没有点赞/精选信号，"精彩"只能定位到活动
+# （见 _editorial_score），因此按"高光活动优先"分配每活动配额。
+PHOTO_RATIO = 0.60        # 目标 ≈ 当年上传照片的 60%
+PHOTO_FLOOR = 40          # 目标下限：照片够多时不低于旧的固定 40，避免画册缩水
+PHOTO_CAP = 120           # 目标上限：控制画册长度 / 体积 / 构建时长
+FEATURE_PHOTO_QUOTA = 4   # 高光介绍页活动的首轮配额
+GALLERY_PHOTO_QUOTA = 2   # 普通画廊活动的首轮配额
+MAX_PHOTOS_PER_RIDE = 6   # 单个活动硬顶，防止一次多图活动刷屏
+MAX_CANDIDATE_RIDES = 60  # 纳入选片的活动数上限，约束 Strava API 调用次数
+
+
+def target_photo_count(total_photos: int, *, ratio: float = PHOTO_RATIO,
+                       floor: int = PHOTO_FLOOR, cap: int = PHOTO_CAP) -> int:
+    """Decide how many photos a year's book should use.
+
+    Grows with the athlete's yearly uploads, but is clamped to [floor, cap]
+    and never asks for more photos than actually exist. A small year simply
+    uses every photo; a typical year keeps the old 40 baseline; a photo-rich
+    year grows toward the cap.
+    """
+    total = max(0, int(total_photos))
+    if not total:
+        return 0
+    wanted = round(total * ratio)
+    return min(total, min(cap, max(floor, wanted)))
+
+
+def plan_photo_quotas(
+    ordered: list[Activity],
+    featured_ids: set[str],
+    target: int,
+    *,
+    feature_quota: int = FEATURE_PHOTO_QUOTA,
+    gallery_quota: int = GALLERY_PHOTO_QUOTA,
+    per_ride_cap: int = MAX_PHOTOS_PER_RIDE,
+) -> dict[str, int]:
+    """Allocate the photo target across activities.
+
+    `ordered` is the top-up priority: featured highlight rides first, then the
+    editorial gallery. Each ride receives a base quota (higher for features),
+    then leftover slots are handed out one photo per pass in priority order,
+    never beyond the ride's own photo_count or per_ride_cap. This weights the
+    featured rides while keeping one photo-heavy activity from crowding out
+    the rest of the year.
+    """
+    quota: dict[str, int] = {}
+    for activity in ordered:
+        base = feature_quota if activity.id in featured_ids else gallery_quota
+        quota[activity.id] = max(0, min(base, activity.photo_count))
+
+    planned = sum(quota.values())
+    while planned < target:
+        progressed = False
+        for activity in ordered:
+            if planned >= target:
+                break
+            ceiling = min(per_ride_cap, activity.photo_count)
+            if quota[activity.id] < ceiling:
+                quota[activity.id] += 1
+                planned += 1
+                progressed = True
+        if not progressed:
+            break  # every ride is at its cap / out of uploads
+    return quota
