@@ -128,12 +128,29 @@ strava-photobook/
 | `STRAVA_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` | Strava 凭证 | — |
 | `PHOTOBOOK_ROOT` | 项目根目录 | 当前目录 |
 | `PHOTOBOOK_DATA_DIR` / `PHOTOBOOK_BOOKS_DIR` / `PHOTOBOOK_RUNTIME_DIR` | 数据/产出/运行时目录 | `data` / `books` / `runtime` |
-| `PHOTOBOOK_PHOTOS_PER_BOOK` | 单本照片上限 | `40` |
+| `PHOTOBOOK_PHOTOS_PER_BOOK` | 可选逃生舱；设置后强制固定入册照片数，不设则按当年上传量动态决定 | 未设置（动态） |
+| `PHOTOBOOK_PHOTO_RATIO` | 动态模式：选取当年上传照片的比例 | `0.60` |
+| `PHOTOBOOK_PHOTO_FLOOR` | 动态模式：入册照片数下限 | `40` |
+| `PHOTOBOOK_PHOTO_CAP` | 动态模式：入册照片数上限 | `120` |
+| `PHOTOBOOK_MAX_PHOTOS_PER_RIDE` | 单次活动最多入册张数，避免一次活动刷屏 | `6` |
 | `PHOTOBOOK_FEATURE_RIDES` | 高光介绍页数量 | `6` |
 | `PHOTOBOOK_MAX_PHOTO_EDGE` | 照片最长边（像素） | `1600` |
 | `GITHUB_CLIENT_ID` | 可选；启用 Device Flow 的 GitHub OAuth App Client ID | — |
 | `GITHUB_TOKEN` | `github-auth` 保存的 GitHub token | — |
 | `GH_TOKEN` | 自动化 token，优先于 `GITHUB_TOKEN` | — |
+
+### 入册照片数（动态）
+
+默认不固定张数，而是跟随当年 Strava 上传量增长：
+
+```
+目标张数 = min(上传总数, clamp(round(上传总数 × PHOTOBOOK_PHOTO_RATIO), PHOTOBOOK_PHOTO_FLOOR, PHOTOBOOK_PHOTO_CAP))
+```
+
+即默认取当年上传照片的 **60%**，并夹在 **40～120 张**之间（上传不足 40 张时全部入册，不凑数）。
+分配上，高光活动起步 4 张、其余活动 2 张，再按活动精彩度（点赞、PR、同行、距离/爬升、图文完整度）
+把剩余名额逐张补足，单次活动最多 `PHOTOBOOK_MAX_PHOTOS_PER_RIDE`（默认 6）张，避免一次活动刷屏。
+需要回到固定数量时，设置 `PHOTOBOOK_PHOTOS_PER_BOOK` 即可强制覆盖（逃生舱）。
 
 ### 换主题
 
@@ -185,8 +202,9 @@ cd books/<年份> && node --test html-contract.test.mjs
 - `STRAVA_REFRESH_TOKEN`：执行本地 `auth` 后 `.env` 中的刷新令牌
 - `SECRETS_ADMIN_TOKEN`：能管理本仓库 Actions Secrets 并推送分支的 GitHub token
 
-照片数允许在发布基线的 **5% 容差**内随 Strava 数据自然浮动（如 40→39 仍发布），只有明显
-回落（如 40→37）才判定为内容回归并拦截发布，旧页面保持不变。Strava 刷新令牌每次轮换后
+动态画册以本次构建声明的目标张数为准：实际入册达到目标的 **90%** 即发布（容忍个别图片下载失败），
+目标本身随上传量增删，不再与线上旧版本比张数；未声明动态目标的旧画册仍沿用发布基线的 **5% 容差**
+（如 40→39 仍发布，40→37 才拦截）。校验不通过时旧页面保持不变。Strava 刷新令牌每次轮换后
 都会立即回写到 `STRAVA_REFRESH_TOKEN`（限流重试成功后也会再回写一次），避免长期运行后
 令牌过期。需要暂停时，在 Actions 中禁用 **Nightly photobook refresh** 工作流即可。
 
