@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,20 +8,37 @@ from tools.validate_release import ValidationError, validate_release
 
 
 def write_book(
-    root: Path, photo_count: int, *, extras: str = "", heatmap: bool = True, target: int = 0
+    root: Path, photo_count: int, *, extras: str = "", heatmap: bool = True,
+    target: int = 0, cover_photo: str | None = None, cover_in_body: bool = True,
 ) -> Path:
     book = root / "book"
     photos = book / "assets" / "photos"
     photos.mkdir(parents=True)
+    cover_name = Path(cover_photo).name if cover_photo else None
     tags = []
     for index in range(photo_count):
         name = f"{index}.jpg"
         (photos / name).write_bytes(b"jpg")
-        tags.append(f'<img src="assets/photos/{name}">')
+        if cover_name == name and not cover_in_body:
+            continue  # cover occupies its own slot; it must not reappear in the body
+        tags.append(
+            f'<article class="book-page art-page bleed recto" data-activity-id="{index}">'
+            f'<img src="assets/photos/{name}"></article>'
+        )
+    if cover_photo:
+        cover_asset = photos / cover_name
+        if not cover_asset.exists():
+            cover_asset.write_bytes(b"jpg")
+        cover_article = (
+            '<article class="book-page art-page cloth recto poster-cover" '
+            f'data-cover-mode="photo"><img src="{cover_photo}"></article>'
+        )
+    else:
+        cover_article = '<article data-cover-mode="photo"></article>'
     target_attr = f' data-photo-target="{target}"' if target else ""
     (book / "index.html").write_text(
         f'<html data-strava-photobook="1"{target_attr}><nav id="month-timeline"></nav>'
-        + '<article data-cover-mode="photo"></article>'
+        + cover_article
         + '<article data-year-review="declaration"></article>'
         + '<article data-year-review="rhythm"></article>'
         + ('<article data-annual-heatmap="1"></article>' if heatmap else '')
@@ -82,6 +101,43 @@ class ReleaseValidationTests(unittest.TestCase):
             candidate = write_book(Path(raw), 35, target=40)
             with self.assertRaisesRegex(ValidationError, r"photo count below target: 35 < 36"):
                 validate_release(candidate)
+
+    def test_rejects_cover_photo_repeated_in_body(self):
+        with tempfile.TemporaryDirectory() as raw:
+            # cover uses 0.jpg and the same file is still rendered as a body page
+            candidate = write_book(Path(raw), 3, cover_photo="assets/photos/0.jpg")
+            with self.assertRaisesRegex(ValidationError, "cover photo repeated in body"):
+                validate_release(candidate)
+
+    def test_accepts_cover_photo_excluded_from_body(self):
+        with tempfile.TemporaryDirectory() as raw:
+            candidate = write_book(
+                Path(raw), 3, cover_photo="assets/photos/0.jpg", cover_in_body=False
+            )
+            result = validate_release(candidate)
+            self.assertEqual(result["photos"], 3)  # cover 0.jpg + body 1.jpg/2.jpg, all unique
+
+    def test_rejects_duplicate_photo_within_body_pages(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repeated = (
+                '<article class="book-page art-page bleed recto" data-activity-id="9">'
+                '<img src="assets/photos/1.jpg"></article>'
+            )
+            candidate = write_book(Path(raw), 3, extras=repeated)
+            with self.assertRaisesRegex(ValidationError, "duplicate photo in body: assets/photos/1.jpg"):
+                validate_release(candidate)
+
+    def test_athlete_avatar_reused_on_feature_pages_is_not_a_duplicate(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            avatars = "".join(
+                '<article class="book-page art-page paper recto">'
+                '<img src="assets/photos/athlete.jpg"></article>'
+                for _ in range(3)
+            )
+            candidate = write_book(root, 2, extras=avatars)
+            (candidate / "assets" / "photos" / "athlete.jpg").write_bytes(b"jpg")
+            self.assertEqual(validate_release(candidate)["photos"], 2)
 
     def test_reused_cover_photo_counts_once(self):
         with tempfile.TemporaryDirectory() as raw:

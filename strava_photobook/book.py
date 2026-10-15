@@ -454,6 +454,13 @@ def build_year(cfg: Config, year: str, activities: list[Activity], hydrate,
         if want > len(a.photos):
             hydrate(a, photos_dir, want, False)
 
+    # 海报封面复用候选池里得分最高的一张。封面固定占用一个名额：正文只取
+    # target-1 张且跳过封面那张，保证整本书 unique 照片数恰为 target，也不会
+    # 因为封面活动在时间序上靠后（正文提前截断）而让封面变成"第 target+1 张"。
+    cover = select_cover(candidates)
+    cover_src = cover.photo.web_path if cover else None
+    body_target = target - (1 if cover_src else 0)
+
     activity_pages: list[str] = []
 
     side = ["recto", "verso"]
@@ -463,22 +470,26 @@ def build_year(cfg: Config, year: str, activities: list[Activity], hydrate,
         if is_featured:
             activity_pages.append(_feature_page(side[len(activity_pages) % 2], highlight, avatar))
         for ph in a.photos[: quotas.get(a.id, 0)]:
-            if used >= target:
+            if ph.web_path == cover_src:
+                continue
+            if used >= body_target:
                 break
             activity_pages.append(_activity_photo_page(side[len(activity_pages) % 2], highlight, ph, str(used + 1)))
             used += 1
-        if used >= target:
+        if used >= body_target:
             break
 
     # 计划产出（已扣除活动自身照片数与候选池上限），作为发布门禁的达成目标。
     planned_target = min(target, sum(quotas.values()))
-    pages = _frame_pages(year, stats, activity_pages, ya, select_cover(candidates))
+    # 封面占一个名额：全书唯一照片 = 正文照片页 + 封面海报（路线封面时无封面照片）。
+    unique_photos = used + (1 if cover_src else 0)
+    pages = _frame_pages(year, stats, activity_pages, ya, cover)
     (out / "index.html").write_text(
         _document(year, "\n        ".join(pages), photo_target=planned_target),
         encoding="utf-8",
     )
     print(
-        f"built {out}  pages={len(pages)} photos={used}/{planned_target} "
+        f"built {out}  pages={len(pages)} photos={unique_photos}/{planned_target} "
         f"uploads={total_photos}"
     )
     return out

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import math
 import re
+from collections import Counter
 from pathlib import Path
 
 
@@ -16,6 +17,27 @@ PHOTO_REGRESSION_TOLERANCE = 0.05
 # 动态画册（HTML 声明 data-photo-target）：实际入册至少要达成目标的 90%，
 # 容忍个别照片下载失败；目标本身随 Strava 上传量增删，故不再与线上基线比较。
 PHOTO_TARGET_FULFILLMENT = 0.90
+
+_ARTICLE_RE = re.compile(r"<article\b([^>]*)>(.*?)</article>", re.S | re.I)
+_IMG_SRC_RE = re.compile(r'<img\b[^>]*\bsrc="(assets/photos/[^"]+)"', re.I)
+
+
+def _photo_placements(html: str) -> tuple[str | None, list[str]]:
+    """Return the cover photo src and the ordered body (bleed page) photo srcs.
+
+    The athlete avatar is reused on several feature pages and is not a ride
+    photo, so it is excluded from uniqueness checks.
+    """
+    cover_src: str | None = None
+    body_srcs: list[str] = []
+    for attrs, inner in _ARTICLE_RE.findall(html):
+        srcs = [s for s in _IMG_SRC_RE.findall(inner) if "athlete" not in s]
+        if 'data-cover-mode="photo"' in attrs:
+            if srcs:
+                cover_src = srcs[0]
+        elif "art-page bleed" in attrs:
+            body_srcs.extend(srcs)
+    return cover_src, body_srcs
 
 
 def _inspect(book: Path) -> tuple[str, list[str]]:
@@ -54,6 +76,13 @@ def validate_release(
         if not (book / source).is_file():
             errors.append(f"missing asset: {source}")
     photos = len({source for source in images if source.startswith("assets/photos/") and "athlete" not in source})
+    # 每张骑行照片在整本书里只允许出现一次：正文照片页之间不得重复，封面海报
+    # 也不得再在正文出现（封面本身占用一个名额，而不是复用一张正文照片）。
+    cover_src, body_srcs = _photo_placements(html)
+    for src in sorted(s for s, n in Counter(body_srcs).items() if n > 1):
+        errors.append(f"duplicate photo in body: {src}")
+    if cover_src and cover_src in body_srcs:
+        errors.append(f"cover photo repeated in body: {cover_src}")
     target_match = re.search(r'data-photo-target="(\d+)"', html)
     photo_target = int(target_match.group(1)) if target_match else 0
     baseline_photos = 0

@@ -18,6 +18,24 @@ BLEED_PAGE = re.compile(
 )
 PHOTO_TARGET = re.compile(r'data-photo-target="(\d+)"')
 POLYLINE = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+_ARTICLE = re.compile(r"<article\b([^>]*)>(.*?)</article>", re.S)
+
+
+def photo_layout(html):
+    """Split ride photos into (cover src, [body bleed-page srcs])."""
+    cover = None
+    body = []
+    for attrs, inner in _ARTICLE.findall(html):
+        srcs = [
+            s for s in re.findall(r'<img[^>]*\bsrc="([^"]+)"', inner)
+            if s.startswith("assets/photos/") and "athlete" not in s
+        ]
+        if 'data-cover-mode="photo"' in attrs:
+            if srcs:
+                cover = srcs[0]
+        elif "art-page bleed" in attrs:
+            body.extend(srcs)
+    return cover, body
 
 
 class DynamicBuildTests(unittest.TestCase):
@@ -54,8 +72,13 @@ class DynamicBuildTests(unittest.TestCase):
     def test_rich_year_grows_up_to_cap_without_flooding_one_ride(self):
         html = self._build(n=30, per=10)  # 300 uploads -> 60% capped at 120
 
+        cover, body = photo_layout(html)
         per_activity = Counter(BLEED_PAGE.findall(html))
-        self.assertEqual(sum(per_activity.values()), 120)
+        self.assertIsNotNone(cover)
+        self.assertNotIn(cover, body)                       # cover is not repeated in body
+        self.assertEqual(len(body), len(set(body)))        # body pages are unique
+        self.assertEqual(len(set(body) | {cover}), 120)    # whole book = 120 unique photos
+        self.assertEqual(sum(per_activity.values()), 119)  # cover consumes one of the 120 slots
         self.assertEqual(PHOTO_TARGET.search(html).group(1), "120")
         self.assertTrue(all(count <= 6 for count in per_activity.values()))
         self.assertGreaterEqual(len(per_activity), 20)  # spread across many rides
@@ -63,13 +86,17 @@ class DynamicBuildTests(unittest.TestCase):
     def test_explicit_override_pins_the_count(self):
         html = self._build(photos_per_book=10)
 
-        self.assertEqual(len(BLEED_PAGE.findall(html)), 10)
+        cover, body = photo_layout(html)
         self.assertEqual(PHOTO_TARGET.search(html).group(1), "10")
+        self.assertNotIn(cover, body)
+        self.assertEqual(len(set(body) | {cover}), 10)
 
     def test_sparse_year_is_not_inflated_to_the_floor(self):
         html = self._build(n=2, per=3)  # only 6 uploads exist
 
-        self.assertEqual(len(BLEED_PAGE.findall(html)), 6)
+        cover, body = photo_layout(html)
+        self.assertNotIn(cover, body)
+        self.assertEqual(len(set(body) | {cover}), 6)
         self.assertEqual(PHOTO_TARGET.search(html).group(1), "6")
 
 
