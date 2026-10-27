@@ -123,6 +123,20 @@ def build_dashboard_site(data: dict, out_dir: Path, template_dir: Path) -> Path:
     template_dir = Path(template_dir)
     source_index = out_dir / "index.html"
     photobook = out_dir / "photobook"
+
+    def excluded(item: Path) -> bool:
+        return (
+            item.name in {".DS_Store", "dashboard", "__pycache__"}
+            or item.name.endswith(".test.mjs")
+            or item.name.endswith(".pyc")
+        )
+
+    def remove(item: Path) -> None:
+        if item.is_dir():
+            shutil.rmtree(item)
+        elif item.exists():
+            item.unlink()
+
     if not photobook.is_dir():
         if not source_index.is_file() or 'data-theme="distance-manifesto"' not in source_index.read_text("utf-8"):
             raise FileNotFoundError("请先生成 Distance Manifesto 画册，再构建仪表盘")
@@ -132,18 +146,37 @@ def build_dashboard_site(data: dict, out_dir: Path, template_dir: Path) -> Path:
         staging.mkdir(parents=True)
         for item in list(out_dir.iterdir()):
             if item.name in {".DS_Store", ".photobook.tmp", "data", "photobook"}:
+                if item.name == ".DS_Store":
+                    remove(item)
+                continue
+            if excluded(item):
+                remove(item)
                 continue
             shutil.move(str(item), str(staging / item.name))
         staging.replace(photobook)
+
+    for folder in (out_dir, photobook):
+        for item in list(folder.iterdir()):
+            if excluded(item):
+                remove(item)
+        for metadata in folder.rglob(".DS_Store"):
+            remove(metadata)
 
     template_index = template_dir / "index.html"
     if not template_index.is_file():
         raise FileNotFoundError(f"缺少仪表盘模板：{template_index}")
     for item in template_dir.iterdir():
         target = out_dir / item.name
+        if item.name == "index.html" or excluded(item):
+            continue
         if item.is_dir():
-            shutil.copytree(item, target, dirs_exist_ok=True)
-        elif item.name != "index.html":
+            shutil.copytree(
+                item,
+                target,
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc"),
+            )
+        else:
             shutil.copy2(item, target)
 
     photos = _book_photos(photobook)

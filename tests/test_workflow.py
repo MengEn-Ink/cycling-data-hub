@@ -28,7 +28,7 @@ class NightlyWorkflowTests(unittest.TestCase):
             "tools/photo_layout_gate.py",
             'build-dashboard "$BOOK_YEAR"',
             'books/$BOOK_YEAR/photobook/index.html',
-            'books/$BOOK_YEAR/photobook/html-contract.test.mjs',
+            'books/$BOOK_YEAR/html-contract.test.mjs',
             'previous_dir/photobook',
             "FETCH_OK=false",
             "env.FETCH_OK == 'true'",
@@ -38,6 +38,7 @@ class NightlyWorkflowTests(unittest.TestCase):
             self.assertIn(token, text)
         self.assertIn("env.INTERVALS_API_KEY != ''", text)
         self.assertLess(text.index('build "$BOOK_YEAR"'), text.index('build-dashboard "$BOOK_YEAR"'))
+        self.assertLess(text.index('books/$BOOK_YEAR/html-contract.test.mjs'), text.index('build-dashboard "$BOOK_YEAR"'))
         self.assertLess(text.index("tools/validate_dashboard.py"), text.index("refs/heads/gh-pages"))
         self.assertLess(text.index("tools/validate_release.py"), text.index("refs/heads/gh-pages"))
         self.assertLess(text.index("BOOK_YEAR="), text.index("Fetch current Strava activities"))

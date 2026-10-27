@@ -56,6 +56,13 @@ def validate_dashboard(site: Path) -> dict[str, int]:
     if 'src="photobook/index.html"' not in html:
         errors.append("dashboard does not embed photobook/index.html")
 
+    for artifact in site.rglob("*") if site.is_dir() else ():
+        relative = artifact.relative_to(site).as_posix()
+        if artifact.name == ".DS_Store" or artifact.name.endswith(".test.mjs"):
+            errors.append(f"development artifact in public site: {relative}")
+        if relative == "photobook/dashboard" and artifact.is_dir():
+            errors.append("development artifact in public site: photobook/dashboard")
+
     counts: dict[str, int] = {}
     for name in ("metrics", "routes", "activities"):
         path = site / "data" / f"{name}.json"

@@ -119,6 +119,10 @@ class BuildDashboardSiteTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (out / "styles.css").write_text("book", encoding="utf-8")
+            (out / "html-contract.test.mjs").write_text("test", encoding="utf-8")
+            (out / ".DS_Store").write_bytes(b"metadata")
+            (out / "dashboard").mkdir()
+            (out / "dashboard" / "stale.js").write_text("stale", encoding="utf-8")
             template = root / "runtime" / "dashboard"
             (template / "assets" / "strava").mkdir(parents=True)
             (template / "index.html").write_text(
@@ -128,6 +132,7 @@ class BuildDashboardSiteTests(unittest.TestCase):
             )
             (template / "dashboard.css").write_text("dashboard", encoding="utf-8")
             (template / "dashboard.js").write_text("dashboard", encoding="utf-8")
+            (template / "dashboard.test.mjs").write_text("test", encoding="utf-8")
             (template / "assets" / "strava" / "strava-white.svg").write_text(
                 "<svg/>", encoding="utf-8"
             )
@@ -142,6 +147,11 @@ class BuildDashboardSiteTests(unittest.TestCase):
             self.assertTrue((out / "photobook" / "index.html").is_file())
             self.assertTrue((out / "dashboard.css").is_file())
             self.assertTrue((out / "data" / "activities.json").is_file())
+            self.assertFalse((out / ".DS_Store").exists())
+            self.assertFalse((out / "dashboard").exists())
+            self.assertFalse((out / "dashboard.test.mjs").exists())
+            self.assertFalse((out / "photobook" / "html-contract.test.mjs").exists())
+            self.assertFalse((out / "photobook" / "dashboard").exists())
 
 
 if __name__ == "__main__":

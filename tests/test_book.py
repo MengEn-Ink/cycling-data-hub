@@ -100,6 +100,30 @@ class DynamicBuildTests(unittest.TestCase):
         self.assertEqual(PHOTO_TARGET.search(html).group(1), "6")
 
 
+class RuntimeCopyTests(unittest.TestCase):
+    def test_copy_runtime_omits_dashboard_and_os_metadata(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            runtime = root / "runtime"
+            (runtime / "dashboard").mkdir(parents=True)
+            (runtime / "dashboard" / "index.html").write_text("dashboard", encoding="utf-8")
+            (runtime / "style").mkdir()
+            (runtime / "style" / "book-style.css").write_text("book", encoding="utf-8")
+            (runtime / "flipbook.js").write_text("book", encoding="utf-8")
+            (runtime / ".DS_Store").write_bytes(b"metadata")
+            cfg = Config(
+                root, root / "data", root / "books", runtime,
+                StravaCreds(), GitHubConfig(),
+            )
+
+            book._copy_runtime(cfg, root / "books" / "2026")
+
+            out = root / "books" / "2026"
+            self.assertTrue((out / "flipbook.js").is_file())
+            self.assertFalse((out / "dashboard").exists())
+            self.assertFalse((out / ".DS_Store").exists())
+
+
 class BookRenderingTests(unittest.TestCase):
     def setUp(self):
         self.activity = Activity(

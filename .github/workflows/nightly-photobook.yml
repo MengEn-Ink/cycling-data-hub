@@ -115,6 +115,7 @@ jobs:
         if: env.FETCH_OK == 'true'
         run: |
           python -m strava_photobook build "$BOOK_YEAR"
+          node --test "books/$BOOK_YEAR/html-contract.test.mjs"
           python -m strava_photobook build-dashboard "$BOOK_YEAR"
 
       - name: Test and validate before publishing
@@ -123,7 +124,6 @@ jobs:
           python -m unittest discover -v
           node --test runtime/*.test.mjs
           node --test runtime/dashboard/*.test.mjs
-          node --test "books/$BOOK_YEAR/photobook/html-contract.test.mjs"
           python -m tools.layout_gate
           python tools/photo_layout_gate.py "books/$BOOK_YEAR/photobook/index.html"
           python tools/validate_release.py "books/$BOOK_YEAR/photobook" --baseline "$PREVIOUS_BOOK" --require-heatmap

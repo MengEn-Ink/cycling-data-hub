@@ -59,6 +59,19 @@ class DashboardValidationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "sensitive key"):
                 validate_dashboard(site)
 
+    def test_rejects_development_artifacts(self):
+        with tempfile.TemporaryDirectory() as raw:
+            site = write_site(Path(raw))
+            (site / ".DS_Store").write_bytes(b"metadata")
+            (site / "dashboard.test.mjs").write_text("test", encoding="utf-8")
+            (site / "photobook" / "dashboard").mkdir()
+            with self.assertRaises(ValidationError) as caught:
+                validate_dashboard(site)
+        message = str(caught.exception)
+        self.assertIn(".DS_Store", message)
+        self.assertIn("dashboard.test.mjs", message)
+        self.assertIn("photobook/dashboard", message)
+
 
 if __name__ == "__main__":
     unittest.main()

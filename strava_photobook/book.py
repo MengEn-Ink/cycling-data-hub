@@ -270,11 +270,15 @@ def _copy_runtime(cfg: Config, out: Path) -> Path:
         shutil.rmtree(out)
     out.mkdir(parents=True)
     for item in cfg.runtime_dir.iterdir():
-        if item.name == "index.html":
+        if item.name in {"index.html", "dashboard", ".DS_Store", "__pycache__"}:
             continue
         dst = out / item.name
         if item.is_dir():
-            shutil.copytree(item, dst)
+            shutil.copytree(
+                item,
+                dst,
+                ignore=shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc"),
+            )
         else:
             shutil.copy2(item, dst)
     # append feature layout to the copied book-style.css (theme.css handles look)
