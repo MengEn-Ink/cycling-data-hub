@@ -284,7 +284,7 @@ def _document(year: str, body: str, *, photo_target: int = 0) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Strava Photobook {year}</title>
+  <title>我的骑行数据 · {year}</title>
   {_theme_restore_script()}
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="theme.css">

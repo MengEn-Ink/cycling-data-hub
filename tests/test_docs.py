@@ -27,5 +27,11 @@ class BeginnerDocsTests(unittest.TestCase):
             self.assertIn(phrase, text)
 
 
+class BrandRenameTests(unittest.TestCase):
+    def test_readme_uses_new_brand(self):
+        text = Path("README.md").read_text(encoding="utf-8")
+        self.assertIn("我的骑行数据", text)
+
+
 if __name__ == "__main__":
     unittest.main()
