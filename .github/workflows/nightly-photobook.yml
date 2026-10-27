@@ -107,9 +107,14 @@ jobs:
             | gh secret set STRAVA_REFRESH_TOKEN --repo "$GITHUB_REPOSITORY"
 
       - name: Sync optional Intervals.icu training data
+        id: intervals
         if: env.FETCH_OK == 'true' && env.INTERVALS_API_KEY != ''
         continue-on-error: true
         run: python -m strava_photobook sync-intervals --year "$BOOK_YEAR"
+
+      - name: Report optional Intervals.icu degradation
+        if: steps.intervals.outcome == 'failure'
+        run: echo "::warning::Intervals.icu sync failed; publishing Strava data with training sections degraded"
 
       - name: Build current-year photobook
         if: env.FETCH_OK == 'true'

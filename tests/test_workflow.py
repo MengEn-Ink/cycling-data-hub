@@ -19,6 +19,8 @@ class NightlyWorkflowTests(unittest.TestCase):
             "Retry Strava fetch after rate limit",
             'fetch --year "$BOOK_YEAR"',
             'sync-intervals --year "$BOOK_YEAR"',
+            "steps.intervals.outcome == 'failure'",
+            "Intervals.icu sync failed",
             "continue-on-error: true",
             "900 - $(date +%s) % 900 + 60",
             "if: always()",

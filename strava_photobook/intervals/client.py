@@ -59,4 +59,9 @@ class IntervalsClient:
         return self._get(f"/athlete/{self.athlete_id}/gear")
 
     def power_curve(self) -> dict[str, Any]:
-        return self._get(f"/athlete/{self.athlete_id}/power-curves.json")
+        # `type` is required by the current Intervals.icu OpenAPI contract.
+        # This project is a cycling dashboard, so only request Ride curves.
+        return self._get(
+            f"/athlete/{self.athlete_id}/power-curves.json",
+            params={"type": "Ride"},
+        )

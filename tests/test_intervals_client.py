@@ -40,7 +40,10 @@ class EndpointTests(unittest.TestCase):
             g.assert_called_with("/athlete/42/gear")
         with mock.patch.object(self.client, "_get", return_value={}) as g:
             self.client.power_curve()
-            g.assert_called_with("/athlete/42/power-curves.json")
+            g.assert_called_with(
+                "/athlete/42/power-curves.json",
+                params={"type": "Ride"},
+            )
 
     def test_429_raises_intervals_error(self):
         resp = mock.Mock(status_code=429, text="too many")
