@@ -96,6 +96,21 @@ def _cmd_build(cfg: Config, args) -> None:
     build_year(cfg, args.year, acts, hydrate, avatar_fetcher)
 
 
+def _cmd_build_dashboard(cfg: Config, args) -> None:
+    from datetime import date
+    from . import source
+    from . import dashboard
+
+    acts = source.load_activities(cfg)
+    data = dashboard.build_dashboard_data(
+        acts, intervals_path=cfg.intervals_dir / f"{args.year}.json",
+        year=args.year, today=date.today(),
+    )
+    out = cfg.book_dir(args.year)
+    dashboard.write_dashboard_json(data, out)
+    print(f"已写仪表盘 JSON -> {out / 'data'}")
+
+
 def _cmd_github_auth(cfg: Config, args) -> None:
     from .github.oauth import authorize_device
 
@@ -152,6 +167,8 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("github-auth", help="通过 GitHub Device Flow 授权")
     b = sub.add_parser("build", help="生成某一年的翻页画册")
     b.add_argument("year")
+    bd = sub.add_parser("build-dashboard", help="生成单页仪表盘的公开 JSON")
+    bd.add_argument("year")
     p = sub.add_parser("publish", help="发布某一年的画册到 GitHub Pages")
     p.add_argument("year")
     p.add_argument("--repo", help="GitHub 仓库名（默认 strava-photobook-<year>）")
@@ -162,6 +179,7 @@ def main(argv: list[str] | None = None) -> None:
         "auth": _cmd_auth, "fetch": _cmd_fetch, "years": _cmd_years, "build": _cmd_build,
         "github-auth": _cmd_github_auth, "publish": _cmd_publish,
         "sync-intervals": _cmd_sync_intervals,
+        "build-dashboard": _cmd_build_dashboard,
     }[args.cmd](cfg, args)
 
 
