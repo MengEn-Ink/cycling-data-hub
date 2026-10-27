@@ -1,6 +1,9 @@
-# 从零生成并发布骑行画册
+# 从零生成并发布骑行数据仪表盘
 
 这份指南面向第一次使用命令行的用户。完成后，你会得到一个根页仪表盘、内嵌翻页画册和一个任何人都能打开的 GitHub Pages 链接。
+
+- 项目仓库：<https://github.com/MengEn-Ink/cycling-data-hub>
+- 在线仪表盘：<https://mengen-ink.github.io/cycling-data-hub/>
 
 ## 1. 准备环境
 
@@ -9,7 +12,7 @@
 ## 2. 创建 Strava API 应用
 
 1. 登录 https://www.strava.com/settings/api 。
-2. 创建一个 Strava API 应用，名称可填 Strava Photobook。
+2. 创建一个 Strava API 应用，名称可填 Cycling Data Hub。
 3. `Authorization Callback Domain` 填 `localhost`。
 4. 记下 Client ID 和 Client Secret。它们只保存在本机 `.env`。
 
@@ -33,7 +36,7 @@
 
 ## 6. 公开发布
 
-运行 `python3 -m strava_photobook publish 2026`。它会创建公开仓库、上传根仪表盘、公开 JSON 和 `photobook/` 到 gh-pages 分支、开启 Pages，并等待公网 HTML 可访问。预期输出包含仓库地址和 Pages 地址。
+运行 `python3 -m strava_photobook publish 2026 --repo cycling-data-hub`。它会复用或创建公开仓库 `cycling-data-hub`、上传根仪表盘、公开 JSON 和 `photobook/` 到 gh-pages 分支、开启 Pages，并等待公网 HTML 可访问。预期输出包含仓库地址和 Pages 地址。
 
 公开页面包含照片、活动标题、日期、路线与统计。执行前请确认允许公开。以后重新生成后运行同一条 publish 命令即可更新。
 
@@ -50,7 +53,7 @@ Run workflow** 手动触发（对应 `workflow_dispatch`）。
 3. `STRAVA_REFRESH_TOKEN`：复制本地 `.env` 的同名值；工作流之后会自动维护轮换值。
 4. `SECRETS_ADMIN_TOKEN`：GitHub token，需要能管理本仓库 Actions Secrets 和推送分支。
 
-可选增强：再添加 `INTERVALS_API_KEY` 与 `INTERVALS_ATHLETE_ID`。夜间任务会只读同步训练负荷、FTP、功率曲线与装备里程；未配置或同步失败时，训练区块显示明确的不可用状态，不阻塞 Strava 仪表盘和画册发布。
+可选增强：再添加 `INTERVALS_API_KEY` 与 `INTERVALS_ATHLETE_ID`。本项目的夜间同步流程只调用 GET 接口来获取训练负荷、FTP、功率曲线与装备里程；API Key 仍应像密码一样保管。未配置或同步失败时，训练区块显示明确的不可用状态，不阻塞 Strava 仪表盘和画册发布。
 
 配置后先手动运行一次。在运行日志中看到 `release valid`、提交 `gh-pages` 成功，并能
 打开 Pages 地址即完成。失败时旧网站不会被覆盖：先打开失败步骤查看日志；凭证错误时重新

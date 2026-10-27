@@ -2,8 +2,9 @@
 
 - 日期：2026-10-27
 - 状态：已批准（用户授权"后面都按推荐执行，直接上线 Pages 完成功能"）
-- 站点品牌名：**我的骑行数据**（远端仓库名保持 `strava-photobook-2026` 不变）
-- Live URL：https://mengen-ink.github.io/strava-photobook-2026/
+- 站点品牌名：**我的骑行数据**
+- 远端仓库：https://github.com/MengEn-Ink/cycling-data-hub
+- Live URL：https://mengen-ink.github.io/cycling-data-hub/
 
 ## 1. 背景与目标
 
@@ -138,6 +139,6 @@
 ## 11. 验收标准
 - 本地 `build-dashboard` 生成单页，第 4 节的 7 个锚点区块齐全。
 - 全量 `python -m unittest` + `node --test` + 发布门禁通过。
-- 发布到 gh-pages，Live URL（https://mengen-ink.github.io/strava-photobook-2026/）返回 HTTP 200 且包含既有 Strava photobook marker 与新仪表盘区块标识。
+- 发布到 gh-pages，Live URL（https://mengen-ink.github.io/cycling-data-hub/）返回 HTTP 200 且包含既有 Strava photobook marker 与新仪表盘区块标识。
 - Intervals.icu 降级路径验证：断源时页面仍成功发布，训练区块显示占位。
 - 审批工作流：草案哈希校验通过后成功在 Intervals.icu 建立带 draft ID 的日历事件；重复触发幂等。

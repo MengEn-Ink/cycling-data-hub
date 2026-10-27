@@ -41,6 +41,17 @@ class BrandRenameTests(unittest.TestCase):
         text = Path("README.md").read_text(encoding="utf-8")
         self.assertIn("我的骑行数据", text)
 
+    def test_active_docs_use_cycling_data_hub_repository(self):
+        active_docs = (
+            Path("README.md"),
+            Path("docs/setup.md"),
+            Path("docs/superpowers/specs/2026-10-27-cycling-data-hub-design.md"),
+        )
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in active_docs)
+        self.assertIn("https://github.com/MengEn-Ink/cycling-data-hub", combined)
+        self.assertIn("https://mengen-ink.github.io/cycling-data-hub/", combined)
+        self.assertNotIn("strava-photobook-2026", combined)
+
 
 if __name__ == "__main__":
     unittest.main()

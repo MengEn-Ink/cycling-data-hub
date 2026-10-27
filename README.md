@@ -3,8 +3,8 @@
 把 **Strava** 骑行记录与可选的 **Intervals.icu** 训练数据汇总成一个响应式年度仪表盘，
 并把可翻页照片画册直接嵌入页面。电脑与手机共享同一套 Distance Manifesto 暗色视觉。
 
-> 🚲 **在线仪表盘（2026）**：<https://mengen-ink.github.io/strava-photobook-2026/>
-> 源码仓库：<https://github.com/MengEn-Ink/strava-photobook-2026>
+> 🚲 **在线仪表盘（2026）**：<https://mengen-ink.github.io/cycling-data-hub/>
+> 源码仓库：<https://github.com/MengEn-Ink/cycling-data-hub>
 
 响应式与阅读友好：窄屏（≤700px）自动折为单页并加宽文字栏、放大触控按钮（≥46px）、
 适配刘海/底部安全区；正文用容器相对单位（cqw），无论页面大小字号都等比、清晰。
@@ -57,7 +57,7 @@ cd books/2026 && python -m http.server 4173 --bind 127.0.0.1
 
 # 7. 一次性 GitHub 授权，然后发布并等待 Pages 真正可访问。
 python3 -m strava_photobook github-auth
-python3 -m strava_photobook publish 2026
+python3 -m strava_photobook publish 2026 --repo cycling-data-hub
 ```
 
 ## 命令
@@ -79,15 +79,16 @@ python3 -m strava_photobook publish 2026
 官方浏览器授权。也可创建 GitHub OAuth App、启用 Device Flow，并配置公开的 `GITHUB_CLIENT_ID`，
 此时工具使用内置 Device Flow，不依赖 `gh`。自动化环境可直接注入 `GH_TOKEN`。
 
-默认创建公开仓库 `strava-photobook-<年份>`，只把生成后的静态站点写到 `gh-pages` 分支；
-`.env`、Strava token、`data/` 和项目源码不会被上传。可以用 `--repo NAME` 自定义仓库名。
+本项目使用公开仓库 `cycling-data-hub`；发布时传入 `--repo cycling-data-hub`，只把生成后的静态站点写到
+`gh-pages` 分支。`.env`、Strava token、`data/` 和项目源码不会被上传。省略 `--repo` 时，命令仍会
+为独立年份站点使用 `strava-photobook-<年份>` 这一兼容默认值。
 发布根页是仪表盘，翻页画册位于 `photobook/`，公开数据位于 `data/metrics.json`、
 `data/activities.json` 与 `data/routes.json`。同名仓库必须带有本工具标记，否则命令会拒绝覆盖。
 
 ## 准备 Strava 应用
 
 1. 打开 <https://www.strava.com/settings/api>，用 Strava 账号登录。
-2. 创建应用：名称随意（如 `strava-photobook`），**Authorization Callback Domain 必须填 `localhost`**。
+2. 创建应用：名称随意（如 `cycling-data-hub`），**Authorization Callback Domain 必须填 `localhost`**。
 3. 记下 **Client ID** 和 **Client Secret**。
 4. 运行 `python -m strava_photobook auth`：未配置时会提示粘贴 client id/secret，浏览器授权后
    refresh token 自动写入 `.env`（权限 600）。
@@ -116,13 +117,13 @@ Intervals.icu（可选）─────┤ 训练负荷 / FTP / 功率 / 装备
 ## 项目结构
 
 ```
-strava-photobook/
+cycling-data-hub/
 ├── strava_photobook/
 │   ├── cli.py / __main__.py   # 命令行入口
 │   ├── config.py              # 环境变量 / .env，无硬编码路径
 │   ├── model.py               # Activity 模型 + 高光筛选
 │   ├── route.py               # GPS 轨迹解码为内联 SVG
-│   ├── theme.py               # 介绍页布局 + 黑白主题
+│   ├── theme.py               # 画册布局 + Distance Manifesto 主题
 │   ├── book.py                # 编排单年画册
 │   ├── source.py              # 从 Strava API 取数据与照片
 │   ├── dashboard.py           # 公开 JSON 与生产站点装配
@@ -154,7 +155,7 @@ strava-photobook/
 | `GITHUB_CLIENT_ID` | 可选；启用 Device Flow 的 GitHub OAuth App Client ID | — |
 | `GITHUB_TOKEN` | `github-auth` 保存的 GitHub token | — |
 | `GH_TOKEN` | 自动化 token，优先于 `GITHUB_TOKEN` | — |
-| `INTERVALS_API_KEY` | 可选；Intervals.icu 只读 API Key | — |
+| `INTERVALS_API_KEY` | 可选；Intervals.icu API Key，本项目同步流程仅调用 GET 接口，按密码保管 | — |
 | `INTERVALS_ATHLETE_ID` | 可选；Intervals.icu athlete ID | `0` |
 
 ### 入册照片数（动态）
