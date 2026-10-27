@@ -62,6 +62,14 @@ def _cmd_fetch(cfg: Config, args) -> None:
     print(f"已缓存 {len(recs)} 条活动 -> {cfg.summaries_path}")
 
 
+def _cmd_sync_intervals(cfg: Config, args) -> None:
+    from .intervals import source as intervals_source
+
+    result = intervals_source.sync_intervals(cfg, year=args.year)
+    print(f"已缓存 {len(result['activities'])} 条 Intervals.icu 活动 -> "
+          f"{cfg.intervals_dir / (args.year + '.json')}")
+
+
 def _cmd_years(cfg: Config, args) -> None:
     from . import source
 
@@ -138,6 +146,8 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("auth", help="浏览器 OAuth 授权，获取 refresh token")
     fetch = sub.add_parser("fetch", help="缓存活动概要")
     fetch.add_argument("--year", help="只同步指定年份，适合每日自动更新")
+    si = sub.add_parser("sync-intervals", help="同步 Intervals.icu 训练数据")
+    si.add_argument("--year", required=True, help="同步指定年份")
     sub.add_parser("years", help="列出缓存中的年份")
     sub.add_parser("github-auth", help="通过 GitHub Device Flow 授权")
     b = sub.add_parser("build", help="生成某一年的翻页画册")
@@ -151,6 +161,7 @@ def main(argv: list[str] | None = None) -> None:
     {
         "auth": _cmd_auth, "fetch": _cmd_fetch, "years": _cmd_years, "build": _cmd_build,
         "github-auth": _cmd_github_auth, "publish": _cmd_publish,
+        "sync-intervals": _cmd_sync_intervals,
     }[args.cmd](cfg, args)
 
 

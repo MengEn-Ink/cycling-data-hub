@@ -39,6 +39,14 @@ class CLITests(unittest.TestCase):
             self.assertEqual(publish.call_args.args[0], book.resolve())
             self.assertEqual(publish.call_args.args[1], "custom")
 
+    def test_sync_intervals_invokes_source_with_year(self):
+        with tempfile.TemporaryDirectory() as root, patch(
+            "strava_photobook.intervals.source.sync_intervals",
+            return_value={"activities": [1, 2], "gear": []},
+        ) as sync:
+            cli.main(["--root", root, "sync-intervals", "--year", "2026"])
+            self.assertEqual(sync.call_args.kwargs["year"], "2026")
+
 
 if __name__ == "__main__":
     unittest.main()
