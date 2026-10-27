@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .model import MAX_PHOTOS_PER_RIDE, PHOTO_CAP, PHOTO_FLOOR, PHOTO_RATIO
@@ -59,6 +59,16 @@ class GitHubConfig:
 
 
 @dataclass
+class IntervalsCreds:
+    api_key: str = ""
+    athlete_id: str = "0"
+
+    @property
+    def ready(self) -> bool:
+        return bool(self.api_key)
+
+
+@dataclass
 class Config:
     root: Path
     data_dir: Path
@@ -66,6 +76,7 @@ class Config:
     runtime_dir: Path
     strava: StravaCreds
     github: GitHubConfig
+    intervals: IntervalsCreds = field(default_factory=IntervalsCreds)
     # 调优项（可用环境变量覆盖）
     max_photo_edge: int = 1600
     # None = 照片数按当年上传量动态决定（见 model.target_photo_count）；
@@ -122,6 +133,10 @@ class Config:
                 api_url=os.getenv("GITHUB_API_URL", "https://api.github.com").rstrip("/"),
                 upload_limit_bytes=_int("GITHUB_UPLOAD_LIMIT_BYTES", 50 * 1024 * 1024),
             ),
+            intervals=IntervalsCreds(
+                api_key=os.getenv("INTERVALS_API_KEY", ""),
+                athlete_id=os.getenv("INTERVALS_ATHLETE_ID", "").strip() or "0",
+            ),
             max_photo_edge=_int("PHOTOBOOK_MAX_PHOTO_EDGE", 1600),
             photos_per_book=photos_per_book,
             feature_rides=_int("PHOTOBOOK_FEATURE_RIDES", 6),
@@ -138,6 +153,10 @@ class Config:
     @property
     def summaries_path(self) -> Path:
         return self.data_dir / "activities.json"
+
+    @property
+    def intervals_dir(self) -> Path:
+        return self.data_dir / "intervals"
 
     def book_dir(self, year: str) -> Path:
         return self.books_dir / year
