@@ -28,10 +28,14 @@ class SyncIntervalsTests(unittest.TestCase):
              "icu_training_load": 65, "icu_ftp": 250, "type": "Ride"},
         ]
         fake.gear.return_value = [{"id": "b1", "name": "Road", "distance": 1000000}]
-        fake.power_curve.return_value = {"list": [{"secs": 5, "watts": 900}]}
+        fake.power_curve.return_value = {
+            "list": [{"secs": 5, "watts": 900, "activity_id": "private"}],
+            "secret": "drop-me",
+        }
         out = source.sync_intervals(cfg, client=fake, year="2026")
         self.assertEqual(out["activities"][0]["training_load"], 65)
         self.assertEqual(out["gear"][0]["distance_km"], 1000.0)
+        self.assertEqual(out["power_curve"], {"list": [{"secs": 5, "watts": 900}]})
         cache = cfg.intervals_dir / "2026.json"
         self.assertTrue(cache.is_file())
         saved = json.loads(cache.read_text(encoding="utf-8"))

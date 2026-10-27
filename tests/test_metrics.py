@@ -120,15 +120,21 @@ class BuildMetricsTests(unittest.TestCase):
 
     def test_includes_training_when_intervals_present(self):
         acts = [ride("1", "2026-06-01T08:00:00Z", km=50.0)]
-        intervals = {"activities": [
-            {"date": "2026-06-01T08:00:00", "training_load": 80, "ftp": 250}
-        ]}
+        intervals = {
+            "activities": [
+                {"date": "2026-06-01T08:00:00", "training_load": 80, "ftp": 250}
+            ],
+            "gear": [{"id": "bike", "name": "Road", "distance_km": 1200}],
+            "power_curve": {"list": [{"secs": 5, "watts": 900}]},
+        }
         out = metrics.build_metrics(acts, intervals=intervals,
                                     today=date(2026, 10, 27),
                                     season_start=date(2027, 4, 1))
         self.assertTrue(out["intervals_available"])
         self.assertEqual(len(out["training_load"]), 1)
         self.assertEqual(out["ftp_trend"], [{"date": "2026-06-01", "ftp": 250}])
+        self.assertEqual(out["gear"][0]["name"], "Road")
+        self.assertEqual(out["power_curve"]["list"][0]["watts"], 900)
 
 
 if __name__ == "__main__":

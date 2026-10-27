@@ -107,8 +107,8 @@ def _cmd_build_dashboard(cfg: Config, args) -> None:
         year=args.year, today=date.today(),
     )
     out = cfg.book_dir(args.year)
-    dashboard.write_dashboard_json(data, out)
-    print(f"已写仪表盘 JSON -> {out / 'data'}")
+    index = dashboard.build_dashboard_site(data, out, cfg.runtime_dir / "dashboard")
+    print(f"已生成单页仪表盘 -> {index}")
 
 
 def _cmd_github_auth(cfg: Config, args) -> None:

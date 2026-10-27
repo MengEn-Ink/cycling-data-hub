@@ -26,6 +26,30 @@ class RoutesPayloadTests(unittest.TestCase):
         self.assertAlmostEqual(routes[0]["distance_km"], 10.0)
         self.assertEqual(routes[0]["date"], "2026-01-01")
 
+    def test_excludes_virtual_routes_from_geographic_heatmap(self):
+        virtual = ride("v1", "2026-01-03T08:00:00Z", km=30.0, poly="virtual")
+        virtual.meta = {"sport_type": "VirtualRide"}
+        self.assertEqual(dashboard.routes_payload([virtual]), [])
+
+
+class ActivitiesPayloadTests(unittest.TestCase):
+    def test_exposes_dashboard_fields_without_raw_api_response(self):
+        activity = ride("1", "2026-06-01T08:00:00Z", km=50.0, poly="xy")
+        activity.elev_m = 700
+        activity.avg_speed_kmh = 28.4
+        activity.moving_time = 6400
+        activity.kudos = 12
+        activity.pr_count = 3
+        activity.athlete_count = 4
+        activity.photo_count = 2
+        activity.meta = {"sport_type": "Ride", "achievement_count": 5, "secret": "drop-me"}
+        payload = dashboard.activities_payload([activity])
+        self.assertEqual(payload[0]["moving_seconds"], 6400)
+        self.assertEqual(payload[0]["sport_type"], "Ride")
+        self.assertEqual(payload[0]["achievements"], 5)
+        self.assertNotIn("meta", payload[0])
+        self.assertNotIn("secret", payload[0])
+
 
 class BuildDashboardDataTests(unittest.TestCase):
     def test_degrades_when_intervals_cache_missing(self):
@@ -39,6 +63,7 @@ class BuildDashboardDataTests(unittest.TestCase):
         self.assertEqual(data["metrics"]["kpis"]["rides"], 1)
         self.assertFalse(data["metrics"]["intervals_available"])
         self.assertEqual(len(data["routes"]), 1)
+        self.assertEqual(len(data["activities"]), 1)
         self.assertEqual(data["year"], "2026")
 
     def test_loads_intervals_cache_when_present(self):
@@ -61,14 +86,62 @@ class WriteJsonTests(unittest.TestCase):
             "year": "2026",
             "metrics": {"kpis": {"rides": 1}},
             "routes": [{"id": "1", "polyline": "xy"}],
+            "activities": [{"id": "1", "name": "Ride"}],
         }
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             dashboard.write_dashboard_json(data, out)
             metrics = _json.loads((out / "data" / "metrics.json").read_text("utf-8"))
             routes = _json.loads((out / "data" / "routes.json").read_text("utf-8"))
+            activities = _json.loads((out / "data" / "activities.json").read_text("utf-8"))
         self.assertEqual(metrics["kpis"]["rides"], 1)
         self.assertEqual(routes[0]["polyline"], "xy")
+        self.assertEqual(activities[0]["id"], "1")
+
+
+class BuildDashboardSiteTests(unittest.TestCase):
+    def test_promotes_dashboard_to_root_and_nests_existing_book(self):
+        data = {
+            "year": "2026",
+            "metrics": {"kpis": {"rides": 1}},
+            "routes": [],
+            "activities": [{"id": "1", "name": "Ride"}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "books" / "2026"
+            photos = out / "assets" / "photos"
+            photos.mkdir(parents=True)
+            (photos / "one.jpg").write_bytes(b"one")
+            (photos / "two.jpg").write_bytes(b"two")
+            (out / "index.html").write_text(
+                '<html data-strava-photobook="1" data-theme="distance-manifesto">book</html>',
+                encoding="utf-8",
+            )
+            (out / "styles.css").write_text("book", encoding="utf-8")
+            template = root / "runtime" / "dashboard"
+            (template / "assets" / "strava").mkdir(parents=True)
+            (template / "index.html").write_text(
+                '<html data-strava-photobook="1" data-cycling-dashboard="1">'
+                '__YEAR__ __HERO_PHOTO__ __ALBUM_PHOTO__ __PHOTOBOOK_URL__</html>',
+                encoding="utf-8",
+            )
+            (template / "dashboard.css").write_text("dashboard", encoding="utf-8")
+            (template / "dashboard.js").write_text("dashboard", encoding="utf-8")
+            (template / "assets" / "strava" / "strava-white.svg").write_text(
+                "<svg/>", encoding="utf-8"
+            )
+
+            result = dashboard.build_dashboard_site(data, out, template)
+
+            index = (out / "index.html").read_text("utf-8")
+            self.assertEqual(result, out / "index.html")
+            self.assertIn("2026", index)
+            self.assertIn("photobook/assets/photos/one.jpg", index)
+            self.assertIn("photobook/index.html", index)
+            self.assertTrue((out / "photobook" / "index.html").is_file())
+            self.assertTrue((out / "dashboard.css").is_file())
+            self.assertTrue((out / "data" / "activities.json").is_file())
 
 
 if __name__ == "__main__":

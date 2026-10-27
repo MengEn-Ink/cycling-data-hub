@@ -132,6 +132,8 @@ def build_metrics(activities: list[Activity], intervals: dict | None, *,
         "eddington": eddington_number(activities),
         "training_load": training_load_series(iv_acts) if iv_acts else [],
         "ftp_trend": ftp_trend(iv_acts) if iv_acts else [],
+        "gear": (intervals or {}).get("gear") or [],
+        "power_curve": (intervals or {}).get("power_curve") or {"list": []},
         "season": season_countdown(today, season_start),
         "intervals_available": bool(iv_acts),
     }

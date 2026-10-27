@@ -47,19 +47,19 @@ class CLITests(unittest.TestCase):
             cli.main(["--root", root, "sync-intervals", "--year", "2026"])
             self.assertEqual(sync.call_args.kwargs["year"], "2026")
 
-    def test_build_dashboard_writes_json_for_year(self):
+    def test_build_dashboard_builds_site_for_year(self):
         with tempfile.TemporaryDirectory() as root, patch(
             "strava_photobook.source.load_activities",
             return_value=[],
         ), patch(
             "strava_photobook.dashboard.build_dashboard_data",
-            return_value={"year": "2026", "metrics": {"kpis": {}}, "routes": []},
+            return_value={"year": "2026", "metrics": {"kpis": {}}, "routes": [], "activities": []},
         ) as build, patch(
-            "strava_photobook.dashboard.write_dashboard_json",
-        ) as write:
+            "strava_photobook.dashboard.build_dashboard_site",
+        ) as build_site:
             cli.main(["--root", root, "build-dashboard", "2026"])
             self.assertEqual(build.call_args.kwargs["year"], "2026")
-            self.assertTrue(write.called)
+            self.assertTrue(build_site.called)
 
 
 if __name__ == "__main__":
