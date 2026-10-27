@@ -12,8 +12,7 @@ export function tapDirection(start, end, bounds, threshold = 12) {
   return clickDirection(end.x, bounds);
 }
 
-export function tapAction({ popoverOpen, start, end, bounds, interactive = false }) {
-  if (popoverOpen) return "close-popover";
+export function tapAction({ start, end, bounds, interactive = false }) {
   if (interactive) return null;
   return tapDirection(start, end, bounds);
 }

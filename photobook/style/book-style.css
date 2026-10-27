@@ -47,11 +47,11 @@
 .art-page .pr-list li{display:flex;justify-content:space-between;gap:2cqw}
 .art-page .pr-list li::before{align-self:center}
 /* portrait photos are full-screen; landscape photos use a separate copy band */
-.art-page.bleed{background:#111}
-.art-page .portrait-full{position:absolute;inset:0;margin:0;overflow:hidden;background:#111}
+.art-page.bleed{background:#0A0807}
+.art-page .portrait-full{position:absolute;inset:0;margin:0;overflow:hidden;background:#0A0807}
 .art-page .portrait-full img{width:100%;height:100%;object-fit:cover;object-position:center}
 .art-page .landscape-split{position:absolute;inset:0;margin:0;overflow:hidden;background:var(--theme-paper)}
-.art-page .landscape-split img{position:absolute;left:0;top:0;width:100%;height:66%;object-fit:contain;object-position:center;background:#111}
+.art-page .landscape-split img{position:absolute;left:0;top:0;width:100%;height:66%;object-fit:contain;object-position:center;background:#0A0807}
 .art-page .landscape-split .bleed-cap{position:absolute;left:0;right:0;bottom:0;height:34%;box-sizing:border-box;overflow:hidden;margin:0;padding:5cqw 7%;color:var(--theme-accent-ink);background:var(--theme-primary);display:flex;flex-direction:column;justify-content:center;gap:1.2cqw}
 .art-page .bleed-cap strong{font:700 4.2cqw/1.05 var(--book-sans);letter-spacing:-.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .art-page .bleed-cap>span{font:600 1.9cqw/1.35 var(--book-sans);letter-spacing:.08em;text-transform:uppercase}
