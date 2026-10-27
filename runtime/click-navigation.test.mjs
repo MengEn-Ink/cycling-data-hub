@@ -21,10 +21,8 @@ test("tapDirection accepts a light tap and rejects a drag", () => {
   assert.equal(tapDirection(null, { x: 700, y: 300 }, bounds), null);
 });
 
-test("an open theme popover closes before any page turn", () => {
+test("tapAction respects interactive targets before turning a page", () => {
   const bounds = { left: 100, right: 900, width: 800 };
-  assert.equal(tapAction({ popoverOpen: true, start: { x: 200, y: 10 }, end: { x: 200, y: 10 }, bounds }), "close-popover");
-  assert.equal(tapAction({ popoverOpen: true, interactive: true, start: { x: 800, y: 10 }, end: { x: 800, y: 10 }, bounds }), "close-popover");
-  assert.equal(tapAction({ popoverOpen: false, start: { x: 200, y: 10 }, end: { x: 200, y: 10 }, bounds }), "previous");
-  assert.equal(tapAction({ popoverOpen: false, interactive: true, start: { x: 800, y: 10 }, end: { x: 800, y: 10 }, bounds }), null);
+  assert.equal(tapAction({ start: { x: 200, y: 10 }, end: { x: 200, y: 10 }, bounds }), "previous");
+  assert.equal(tapAction({ interactive: true, start: { x: 800, y: 10 }, end: { x: 800, y: 10 }, bounds }), null);
 });

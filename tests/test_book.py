@@ -234,29 +234,27 @@ class BookRenderingTests(unittest.TestCase):
         self.assertLess(len(rendered), 3000)
         self.assertIn("…", rendered)
 
-    def test_document_renders_accessible_theme_picker_and_scripts(self):
+    def test_document_uses_distance_manifesto_as_the_only_theme(self):
         body = (
             '<article class="book-page" data-month="3"></article>'
             '<article class="book-page" data-month="3"></article>'
             '<article class="book-page" data-month="8"></article>'
         )
         rendered = _document("2026", body)
-        self.assertIn('id="theme-toggle"', rendered)
-        self.assertIn('aria-expanded="false"', rendered)
-        self.assertIn('id="theme-popover"', rendered)
-        self.assertEqual(rendered.count('data-theme-id="'), 19)
-        self.assertIn('aria-pressed="true"', rendered)
-        self.assertIn('strava-photobook.theme', rendered)
-        self.assertIn("style.setProperty('--theme-primary'", rendered)
-        self.assertLess(rendered.index('theme-catalog.js'), rendered.index('flipbook.js'))
+        self.assertIn('data-theme="distance-manifesto"', rendered)
+        self.assertIn('<meta name="theme-color" content="#0A0807">', rendered)
+        self.assertNotIn('id="theme-toggle"', rendered)
+        self.assertNotIn('id="theme-popover"', rendered)
+        self.assertNotIn('data-theme-id="', rendered)
+        self.assertNotIn('strava-photobook.theme', rendered)
+        self.assertNotIn('theme-catalog.js', rendered)
         self.assertEqual(rendered.count('class="month-jump"'), 2)
         self.assertIn('data-month="3" aria-label="跳到 3 月"', rendered)
         self.assertIn('data-month="8" aria-label="跳到 8 月"', rendered)
         self.assertIn('id="month-timeline"', rendered)
         self.assertIn('month-timeline.js', rendered)
         self.assertNotIn('class="book-header"', rendered)
-        self.assertIn('class="book-theme-overlay"', rendered)
-        self.assertLess(rendered.index('class="book-theme-overlay"'), rendered.index('id="book"'))
+        self.assertNotIn('class="book-theme-overlay"', rendered)
 
 
 if __name__ == "__main__":

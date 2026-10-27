@@ -46,17 +46,12 @@ test("vendored runtime and photo directory exist", async () => {
   assert.equal((await stat(new URL("assets/photos/", root))).isDirectory(), true);
 });
 
-test("theme picker interaction is persistent and keyboard accessible", () => {
-  assert.match(index, /id="theme-toggle"[^>]*aria-expanded="false"/);
-  assert.match(index, /id="theme-popover"[^>]*role="dialog"/);
-  assert.match(index, /class="theme-options"/);
-  assert.match(script, /storedTheme/);
-  assert.match(script, /applyTheme/);
-  assert.match(script, /aria-expanded/);
-  assert.match(script, /aria-pressed/);
-  assert.match(script, /Escape/);
-  assert.match(script, /document\.addEventListener\("click"/);
-  assert.match(script, /themeToggle\.focus/);
+test("Distance Manifesto is the fixed theme without a picker or persistence", () => {
+  assert.match(index, /<html[^>]*data-theme="distance-manifesto"/);
+  assert.match(index, /<meta name="theme-color" content="#0A0807">/);
+  assert.doesNotMatch(index, /theme-toggle|theme-popover|data-theme-id|book-theme-overlay/);
+  assert.doesNotMatch(script, /storedTheme|applyTheme|requestedTheme|themePicker/);
+  assert.doesNotMatch(`${index}\n${script}`, /theme-catalog|strava-photobook\.theme|localStorage/);
   assert.match(script, /tapAction/);
   assert.match(script, /isInteractiveTarget/);
   assert.match(script, /disableFlipByClick:\s*true/);
@@ -64,12 +59,9 @@ test("theme picker interaction is persistent and keyboard accessible", () => {
   assert.match(script, /capture:\s*true/);
   assert.match(script, /flippingTime:\s*460/);
   assert.match(script, /drawShadow:\s*false/);
-  assert.match(script, /setThemePopover\(false/);
-  assert.match(script, /close-popover/);
   assert.match(script, /if \(orientationStatus\) orientationStatus\.textContent/);
   assert.doesNotMatch(script, /orientationStatus\?\.textContent/);
   assert.doesNotMatch(index, /class="book-header"/);
-  assert.match(index, /class="book-theme-overlay"/);
 });
 
 test("month timeline is accessible and photo folios stay outside artwork", () => {

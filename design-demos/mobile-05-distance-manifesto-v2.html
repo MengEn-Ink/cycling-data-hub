@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="zh-CN" data-strava-photobook="1">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0a0807" />
+    <title>Distance Manifesto V2 · 我的骑行数据</title>
+    <style>
+      :root {
+        --black: #0a0807;
+        --brown: #17110e;
+        --paper: #d8c7b5;
+        --light: #f4e8d8;
+        --rust: #f05523;
+        --lime: #8ef236;
+        --line: #58463a;
+        --muted: #aa998c;
+        --purple: #a78bfa;
+        --display: "Bodoni 72", "Didot", serif;
+        --sans: "Avenir Next", "PingFang SC", sans-serif;
+        --song: "Songti SC", "STSong", serif;
+        --mono: Menlo, monospace;
+        font-synthesis: none;
+        line-break: strict;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        background: #19130f;
+      }
+      body {
+        width: min(100%, 430px);
+        margin: 0 auto;
+        overflow-x: hidden;
+        background: var(--black);
+        color: var(--paper);
+        font: 16px/1.7 var(--sans);
+        box-shadow: 0 0 70px #000a;
+      }
+      body.viewer-open {
+        overflow: hidden;
+      }
+      a {
+        color: inherit;
+      }
+      .data {
+        font-variant-numeric: tabular-nums;
+      }
+      .source {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: #b9a99d;
+        font-size: 12px;
+      }
+      .source:before {
+        content: "";
+        width: 24px;
+        height: 1px;
+        background: var(--rust);
+      }
+      .source.rule:before {
+        background: var(--paper);
+      }
+      .source.ai:before {
+        background: var(--purple);
+      }
+      header {
+        position: fixed;
+        z-index: 30;
+        top: 0;
+        width: min(100%, 430px);
+        height: 54px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 17px;
+        background: #0a0807e5;
+        border-bottom: 1px solid #d8c7b528;
+        backdrop-filter: blur(12px);
+      }
+      header a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      header span {
+        color: var(--rust);
+        font: 12px var(--mono);
+      }
+      .hero {
+        min-height: 980px;
+        padding-top: 54px;
+        position: relative;
+        overflow: hidden;
+      }
+      .folio {
+        display: flex;
+        justify-content: space-between;
+        margin: 35px 18px 0;
+        padding-top: 10px;
+        border-top: 1px solid var(--paper);
+        color: #af9f92;
+        font: 12px var(--mono);
+      }
+      .hero-number {
+        position: relative;
+        z-index: 3;
+        margin: 80px 0 0 -9px;
+        font: 400 clamp(8.5rem, 45vw, 12.2rem)/0.58 var(--display);
+        letter-spacing: -0.1em;
+        color: var(--light);
+        white-space: nowrap;
+      }
+      .hero-number span {
+        display: block;
+      }
+      .hero-number .decimal {
+        width: max-content;
+        margin-left: 43%;
+        color: var(--rust);
+      }
+      .unit {
+        position: relative;
+        z-index: 4;
+        margin: 43px 18px 0;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: end;
+        gap: 24px;
+      }
+      .unit b {
+        font-size: 43px;
+        line-height: 0.9;
+        color: var(--rust);
+      }
+      .unit p {
+        max-width: 14em;
+        margin: 0;
+        color: #c0b0a4;
+        font-family: var(--song);
+      }
+      .hero-photo {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 420px;
+      }
+      .hero-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 52% 50%;
+        filter: grayscale(1) contrast(1.15) brightness(0.79);
+      }
+      .hero-photo:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, var(--black), transparent 34%),
+          linear-gradient(0deg, #0a0807d0, transparent 48%);
+      }
+      .hero-caption {
+        position: absolute;
+        z-index: 2;
+        right: 17px;
+        bottom: 18px;
+        width: min(220px, 65%);
+        margin: 0;
+        text-align: right;
+        color: #e9ded5;
+        font: 14px/1.55 var(--song);
+      }
+      .index {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-block: 1px solid var(--line);
+      }
+      .index div {
+        min-height: 94px;
+        padding: 14px;
+        border-right: 1px solid var(--line);
+      }
+      .index div:nth-child(3n) {
+        border-right: 0;
+      }
+      .index div:nth-child(-n + 3) {
+        border-bottom: 1px solid var(--line);
+      }
+      .index b {
+        display: block;
+        color: var(--light);
+        font: 700 18px var(--mono);
+      }
+      .index span {
+        color: #9b897c;
+        font-size: 12px;
+      }
+      .chapter {
+        padding: 95px 18px;
+        border-top: 1px solid var(--line);
+        scroll-margin-top: 54px;
+      }
+      .chapter-no {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 50px;
+        color: var(--rust);
+        font: 12px var(--mono);
+      }
+      .chapter-no:after {
+        content: "";
+        height: 1px;
+        background: var(--line);
+        flex: 1;
+      }
+      .chapter h2 {
+        max-width: 100%;
+        margin: 0 0 30px;
+        font: 400 clamp(3.7rem, 17vw, 4.6rem)/0.82 var(--display);
+        letter-spacing: -0.055em;
+        color: var(--light);
+        overflow-wrap: anywhere;
+      }
+      .intro {
+        margin: 0 0 46px;
+        color: #baa99d;
+        font-family: var(--song);
+      }
+      .rhythm-panel {
+        margin-inline: -6px;
+        padding: 0 6px;
+        border-block: 1px solid var(--paper);
+      }
+      .rhythm-summary {
+        min-height: 120px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: end;
+        padding: 18px 6px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .rhythm-summary span {
+        color: #978578;
+        font: 12px var(--mono);
+      }
+      .rhythm-summary b {
+        display: block;
+        margin-top: 7px;
+        color: var(--light);
+        font: 400 clamp(3.5rem, 16vw, 4.4rem)/0.8 var(--display);
+        letter-spacing: -0.055em;
+        white-space: nowrap;
+      }
+      .rhythm-summary p {
+        max-width: 10em;
+        margin: 0;
+        color: #ad9c8f;
+        text-align: right;
+        font: 12px/1.65 var(--mono);
+      }
+      .bar-chart {
+        height: 365px;
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        align-items: end;
+        background-image: linear-gradient(
+          to top,
+          #d8c7b512 1px,
+          transparent 1px
+        );
+        background-size: 100% 25%;
+        border-bottom: 1px solid var(--paper);
+      }
+      .bar-option {
+        position: relative;
+        min-width: 0;
+        height: 100%;
+        padding: 0 2px;
+        border: 0;
+        background: transparent;
+        color: var(--paper);
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) 44px;
+        align-items: end;
+        cursor: pointer;
+      }
+      .bar-option:before {
+        content: "";
+        position: absolute;
+        inset: 0;
+      }
+      .bar {
+        justify-self: center;
+        width: min(22px, 65%);
+        height: var(--h);
+        min-height: 5px;
+        background: var(--rust);
+        transition:
+          filter 0.2s,
+          transform 0.2s;
+      }
+      .bar-option[aria-pressed="true"] .bar {
+        background: var(--light);
+        filter: drop-shadow(0 0 8px #f4e8d866);
+        transform: translateY(-4px);
+      }
+      .bar-option:hover .bar {
+        filter: brightness(1.22);
+      }
+      .bar-option span {
+        align-self: center;
+        justify-self: center;
+        color: #9d8b7f;
+        font: 12px var(--mono);
+      }
+      .bar-option[aria-pressed="true"] span {
+        color: var(--light);
+      }
+      .chart-note {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 6px;
+        color: #907f72;
+        font: 12px/1.6 var(--mono);
+      }
+      .chart-note span:last-child {
+        text-align: right;
+      }
+      .peak-note {
+        margin-top: 30px;
+        padding: 20px;
+        border-left: 4px solid var(--rust);
+        background: var(--brown);
+      }
+      .peak-note b {
+        display: block;
+        color: var(--light);
+        font-size: 17px;
+      }
+      .peak-note p {
+        margin: 8px 0 0;
+        color: #aa998c;
+        font-family: var(--song);
+      }
+      .route-map-chapter {
+        padding-top: 76px;
+      }
+      .route-map-panel {
+        border-block: 1px solid var(--paper);
+      }
+      .route-map-head {
+        min-height: 136px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 18px;
+        padding: 22px 0 20px;
+      }
+      .route-map-head b {
+        display: block;
+        margin-top: 11px;
+        color: var(--light);
+        font: 400 76px/0.68 var(--display);
+        letter-spacing: -0.055em;
+      }
+      .route-map-head p {
+        margin: 0;
+        color: #9d8b7f;
+        text-align: right;
+        font: 12px/1.7 var(--mono);
+      }
+      .route-map-frame {
+        position: relative;
+        height: 570px;
+        margin-inline: -18px;
+        overflow: hidden;
+        border-block: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 52% 64%, #391b10 0, transparent 38%),
+          linear-gradient(145deg, #16100d, #090807 72%);
+      }
+      .route-map-frame:before {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        background-image:
+          linear-gradient(#d8c7b50b 1px, transparent 1px),
+          linear-gradient(90deg, #d8c7b50b 1px, transparent 1px);
+        background-size: 47px 47px;
+      }
+      .route-map-frame:after {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 74px 20px #080605;
+      }
+      .route-map-frame canvas {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 0 5px #f055236b);
+      }
+      .map-coordinate {
+        position: absolute;
+        z-index: 3;
+        color: #a08c7c;
+        font: 10px var(--mono);
+        letter-spacing: 0.05em;
+      }
+      .map-coordinate.nw {
+        top: 13px;
+        left: 14px;
+      }
+      .map-coordinate.ne {
+        top: 13px;
+        right: 14px;
+        text-align: right;
+      }
+      .map-coordinate.sw {
+        left: 14px;
+        bottom: 13px;
+      }
+      .map-coordinate.se {
+        right: 14px;
+        bottom: 13px;
+        text-align: right;
+      }
+      .route-status {
+        position: absolute;
+        z-index: 3;
+        left: 14px;
+        right: 14px;
+        bottom: 38px;
+        padding-top: 10px;
+        border-top: 1px solid #d8c7b552;
+        color: #c7b6a8;
+        font: 11px/1.5 var(--mono);
+      }
+      .route-map-legend {
+        display: grid;
+        grid-template-columns: auto minmax(88px, 1fr) auto;
+        align-items: center;
+        gap: 13px;
+        padding: 17px 0 15px;
+        color: #99877a;
+        font: 11px var(--mono);
+      }
+      .route-map-scale {
+        height: 5px;
+        background: linear-gradient(
+          90deg,
+          #70230f,
+          #ed4d1b 38%,
+          #ffad54 72%,
+          #fff1d0
+        );
+        box-shadow: 0 0 11px #f0552347;
+      }
+      .route-map-note {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 0 0 20px;
+        color: #907f72;
+        font: 12px/1.55 var(--mono);
+      }
+      .route-map-note span:last-child {
+        text-align: right;
+      }
+      .route-map-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--line);
+      }
+      .route-map-stats div {
+        min-height: 108px;
+        padding: 18px;
+        background: var(--brown);
+      }
+      .route-map-stats b {
+        display: block;
+        color: var(--light);
+        font: 400 39px/0.9 var(--display);
+      }
+      .route-map-stats span {
+        display: block;
+        margin-top: 12px;
+        color: #a49387;
+        font-size: 12px;
+      }
+      .absence {
+        min-height: 610px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 29px 0;
+        border-block: 1px solid var(--line);
+      }
+      .absence-mark {
+        font: 400 174px/0.7 var(--display);
+        color: #8f7e72;
+      }
+      .absence h3 {
+        margin: 0 0 17px;
+        font: 400 48px/0.92 var(--display);
+        color: var(--light);
+      }
+      .absence p {
+        color: #b4a395;
+        font-family: var(--song);
+      }
+      .expected {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+      }
+      .expected div {
+        min-height: 98px;
+        padding: 13px;
+        background: var(--black);
+      }
+      .expected span {
+        color: #9b8879;
+        font: 12px var(--mono);
+      }
+      .expected b {
+        display: block;
+        margin-top: 24px;
+        color: #9b8a7e;
+        font: 400 26px var(--display);
+      }
+      .album-section {
+        padding-inline: 0;
+      }
+      .album-section > .chapter-no,
+      .album-section > h2,
+      .album-section > .intro {
+        margin-inline: 18px;
+      }
+      .album-cover {
+        position: relative;
+        width: 100%;
+        height: 730px;
+        padding: 0;
+        border: 0;
+        background: #111;
+        color: #fff;
+        text-align: left;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .album-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(0.74) contrast(1.08);
+      }
+      .album-cover:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, #0a0807c4, transparent 38%),
+          linear-gradient(0deg, #0a0807f2, transparent 65%);
+      }
+      .album-copy {
+        position: absolute;
+        z-index: 2;
+        left: 18px;
+        right: 18px;
+        bottom: 27px;
+      }
+      .album-copy small {
+        display: block;
+        margin-bottom: 18px;
+        color: #ddd4cc;
+        font: 12px var(--mono);
+      }
+      .album-copy b {
+        display: block;
+        font: 400 clamp(3.8rem, 17vw, 4.6rem)/0.8 var(--display);
+        color: #fff4e6;
+        letter-spacing: -0.045em;
+      }
+      .album-copy p {
+        margin: 22px 0 0;
+        color: #e0d2c7;
+        font-family: var(--song);
+      }
+      .open-book {
+        min-height: 56px;
+        margin-top: 24px;
+        padding: 0 15px;
+        border: 1px solid #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #0a0807dc;
+        color: #fff;
+        font: 700 15px var(--sans);
+      }
+      .open-book span:last-child {
+        color: var(--rust);
+        font: 12px var(--mono);
+      }
+      .album-viewer[hidden] {
+        display: none;
+      }
+      .album-viewer {
+        position: fixed;
+        z-index: 100;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #000c;
+        backdrop-filter: blur(10px);
+      }
+      .viewer-shell {
+        width: min(100%, 430px);
+        height: 100dvh;
+        display: grid;
+        grid-template-rows: 56px minmax(0, 1fr);
+        background: #fff;
+      }
+      .viewer-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px 0 16px;
+        background: #0a0807;
+        color: #fff;
+      }
+      .viewer-bar div {
+        display: grid;
+      }
+      .viewer-bar b {
+        font-size: 14px;
+      }
+      .viewer-bar span {
+        color: #aaa19b;
+        font-size: 12px;
+      }
+      .viewer-close {
+        width: 44px;
+        height: 44px;
+        border: 1px solid #ffffff45;
+        background: #17110e;
+        color: #fff;
+        font: 700 19px var(--sans);
+        cursor: pointer;
+      }
+      .viewer-shell iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+      }
+      .ride {
+        padding: 24px 0;
+        border-top: 1px solid var(--line);
+      }
+      .ride:last-child {
+        border-bottom: 1px solid var(--line);
+      }
+      .ride i {
+        display: block;
+        color: var(--rust);
+        font: 12px var(--mono);
+        font-style: normal;
+      }
+      .ride h3 {
+        margin: 12px 0 17px;
+        font-size: 18px;
+      }
+      .ride-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        color: #a49387;
+        font: 12px var(--mono);
+      }
+      .ride-meta b {
+        color: var(--light);
+      }
+      .ride-meta span {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .season {
+        margin-inline: -18px;
+      }
+      .count {
+        min-height: 500px;
+        padding: 28px 18px;
+        background: var(--rust);
+        color: #180806;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .count span {
+        font: 12px var(--mono);
+      }
+      .count b {
+        font: 400 173px/0.62 var(--display);
+        letter-spacing: -0.08em;
+      }
+      .count strong {
+        font-size: 27px;
+      }
+      .plan {
+        padding: 42px 18px;
+        background: var(--brown);
+      }
+      .plan h3 {
+        margin: 25px 0 18px;
+        font: 400 50px/0.9 var(--display);
+        color: var(--light);
+      }
+      .plan p {
+        color: #b6a69a;
+        font-family: var(--song);
+      }
+      .approval {
+        margin-top: 38px;
+        border-top: 1px solid var(--paper);
+      }
+      .approval div {
+        display: grid;
+        grid-template-columns: 54px 76px minmax(0, 1fr);
+        gap: 9px;
+        align-items: center;
+        min-height: 72px;
+        border-bottom: 1px solid var(--line);
+      }
+      .approval i {
+        color: #9c8b7e;
+        font: 12px var(--mono);
+        font-style: normal;
+      }
+      .approval b {
+        font-size: 14px;
+      }
+      .approval span {
+        color: #a29184;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+      footer {
+        padding: 30px 18px 44px;
+        border-top: 1px solid var(--line);
+        color: #9a897c;
+        font-size: 12px;
+      }
+      footer img {
+        display: block;
+        width: 96px;
+        margin-top: 16px;
+      }
+      :focus-visible {
+        outline: 3px solid var(--rust);
+        outline-offset: 2px;
+      }
+      @media (min-width: 431px) {
+        body {
+          margin-block: 18px;
+          border: 1px solid #4b3b31;
+        }
+        header {
+          left: 50%;
+          translate: -50% 0;
+        }
+      }
+      @media (max-width: 360px) {
+        .hero-number {
+          font-size: 8.1rem;
+        }
+        .chapter h2 {
+          font-size: 3.45rem;
+        }
+        .rhythm-summary b {
+          font-size: 3.2rem;
+        }
+        .ride-meta {
+          grid-template-columns: 1fr 1fr;
+        }
+        .ride-meta span:last-child {
+          grid-column: 1/-1;
+          text-align: left;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .bar {
+          transition: none;
+        }
+      }
+      .route-map-chapter h2 {
+        font-size: clamp(3.1rem, 14.5vw, 4rem);
+      }
+    </style>
+  </head>
+  <body>
+    <header><a href="#top">我的骑行数据</a><span>05 / V2</span></header>
+    <main id="top">
+      <section class="hero">
+        <div class="folio">
+          <span>ANNUAL DISTANCE</span><span>VOL. 02</span>
+        </div>
+        <div class="hero-number data">
+          <span>7,984</span><span class="decimal">.5</span>
+        </div>
+        <div class="unit">
+          <b>公里</b>
+          <p>不是一张统计卡，是这一年最直接的尺度。</p>
+        </div>
+        <div class="hero-photo">
+          <img
+            src="../books/2026/photobook/assets/photos/19563904174-00.jpg"
+            alt="山路上的集团骑行"
+          />
+          <p class="hero-caption">111 次出发，把城市与山路连成一张私人图谱。</p>
+        </div>
+      </section>
+      <div class="index">
+        <div><b>111</b><span>次骑行</span></div>
+        <div><b>64,299</b><span>爬升 m</span></div>
+        <div><b>245.7</b><span>小时</span></div>
+        <div><b>4,503</b><span>kudos</span></div>
+        <div><b>175 km</b><span>最长</span></div>
+        <div><b>63</b><span>Eddington</span></div>
+      </div>
+      <section class="chapter" id="rhythm">
+        <div class="chapter-no">01 / 年度节奏</div>
+        <h2>八个月，<br />在柱高里呼吸。</h2>
+        <p class="intro">
+          八根柱只编码距离，不在柱顶堆叠长数字。点击任一月份，精确距离、爬升和活动数统一显示在上方。
+        </p>
+        <div class="rhythm-panel">
+          <div class="rhythm-summary" aria-live="polite">
+            <div>
+              <span id="active-month">08月 / DISTANCE</span
+              ><b id="active-distance" class="data">1,714.1</b>
+            </div>
+            <p>
+              <span id="active-elevation">15,607 m 爬升</span><br /><span
+                id="active-rides"
+                >20 次骑行</span
+              >
+            </p>
+          </div>
+          <div
+            class="bar-chart"
+            role="group"
+            aria-label="2026年月度骑行距离柱状图"
+          >
+            <button
+              class="bar-option"
+              type="button"
+              data-month="02"
+              data-distance="71.1"
+              data-elevation="637"
+              data-rides="1"
+              aria-label="2月，71.1公里，爬升637米，1次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 4.1%"></i><span>02</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="03"
+              data-distance="440.0"
+              data-elevation="4,149"
+              data-rides="5"
+              aria-label="3月，440.0公里，爬升4149米，5次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 25.7%"></i><span>03</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="04"
+              data-distance="758.0"
+              data-elevation="7,143"
+              data-rides="10"
+              aria-label="4月，758.0公里，爬升7143米，10次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 44.2%"></i><span>04</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="05"
+              data-distance="1,309.2"
+              data-elevation="7,875"
+              data-rides="17"
+              aria-label="5月，1309.2公里，爬升7875米，17次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 76.4%"></i><span>05</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="06"
+              data-distance="1,253.9"
+              data-elevation="9,698"
+              data-rides="19"
+              aria-label="6月，1253.9公里，爬升9698米，19次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 73.2%"></i><span>06</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="07"
+              data-distance="1,645.1"
+              data-elevation="11,927"
+              data-rides="27"
+              aria-label="7月，1645.1公里，爬升11927米，27次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 96%"></i><span>07</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="08"
+              data-distance="1,714.1"
+              data-elevation="15,607"
+              data-rides="20"
+              aria-label="8月，1714.1公里，爬升15607米，20次骑行"
+              aria-pressed="true"
+            >
+              <i class="bar" style="--h: 100%"></i><span>08</span></button
+            ><button
+              class="bar-option"
+              type="button"
+              data-month="09"
+              data-distance="793.1"
+              data-elevation="7,263"
+              data-rides="12"
+              aria-label="9月，793.1公里，爬升7263米，12次骑行"
+              aria-pressed="false"
+            >
+              <i class="bar" style="--h: 46.3%"></i><span>09</span>
+            </button>
+          </div>
+          <div class="chart-note">
+            <span>单位：km</span><span>柱顶不放数值<br />避免移动端重叠</span>
+          </div>
+        </div>
+        <div class="peak-note">
+          <b>8 月是距离与爬升双峰值。</b>
+          <p>1,714.1 km / 15,607 m；原始指标来自本地 Strava 缓存。</p>
+        </div>
+      </section>
+      <section class="chapter route-map-chapter" id="heatmap">
+        <div class="chapter-no">02 / 骑行路线热图</div>
+        <h2>骑过的路，<br />会越来越亮。</h2>
+        <p class="intro">
+          127 条户外骑行的真实轨迹叠加。重复经过的道路会从橙色升到暖白；3
+          条室内骑行不参与地理绘制。
+        </p>
+        <div class="route-map-panel">
+          <div class="route-map-head">
+            <div>
+              <span class="source">Strava summary_polyline</span
+              ><b id="route-count" class="data">127</b>
+            </div>
+            <p>OUTDOOR RIDE<br />FEB — SEP</p>
+          </div>
+          <div class="route-map-frame">
+            <canvas
+              id="route-heatmap"
+              role="img"
+              aria-label="2026 年 127 条户外骑行真实轨迹叠加形成的路线密度热图"
+              >你的浏览器不支持路线热图画布。</canvas
+            ><span class="map-coordinate nw">40.80 N<br />115.58 E</span
+            ><span class="map-coordinate ne">40.80 N<br />116.92 E</span
+            ><span class="map-coordinate sw">39.63 N<br />115.58 E</span
+            ><span class="map-coordinate se">39.63 N<br />116.92 E</span>
+            <div id="route-status" class="route-status" aria-live="polite">
+              正在叠加真实骑行轨迹…
+            </div>
+          </div>
+          <div class="route-map-legend">
+            <span>单次经过</span
+            ><i class="route-map-scale" aria-hidden="true"></i
+            ><span>反复经过</span>
+          </div>
+          <div class="route-map-note">
+            <span>亮度 = 路线重合频次</span><span>不代表速度或训练强度</span>
+          </div>
+          <div class="route-map-stats">
+            <div>
+              <b id="route-stat-count" class="data">127</b
+              ><span>户外骑行轨迹</span>
+            </div>
+            <div>
+              <b id="route-point-count" class="data">—</b
+              ><span>解码后的轨迹采样点</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="chapter" id="training">
+        <div class="chapter-no">03 / 训练证据</div>
+        <h2>空白，也是一种<br />诚实的图表。</h2>
+        <p class="intro">
+          Intervals.icu 尚未同步。没有证据，就不展示 CTL、ATL、TSB 或 FTP。
+        </p>
+        <div class="absence">
+          <span class="source rule">数据可用性状态</span>
+          <div class="absence-mark">—</div>
+          <div>
+            <h3>训练数据<br />尚未抵达</h3>
+            <p>
+              同步之后，数值会带着来源与计算规则出现。在此之前，这一页保持空白。
+            </p>
+          </div>
+          <div class="expected">
+            <div><span>CTL</span><b>—</b></div>
+            <div><span>TSB</span><b>—</b></div>
+            <div><span>FTP</span><b>—</b></div>
+          </div>
+        </div>
+      </section>
+      <section class="chapter album-section" id="book">
+        <div class="chapter-no">04 / 翻页画册</div>
+        <h2>数据之后，<br />让照片说话。</h2>
+        <p class="intro">点击封面，直接打开本项目现有 StPageFlip 年度画册。</p>
+        <button
+          id="open-album"
+          class="album-cover"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="album-viewer"
+        >
+          <img
+            src="../books/2026/photobook/assets/photos/18166002364-00.jpg"
+            alt="骑行者动态跟拍"
+          /><span class="album-copy"
+            ><small>2026 PHOTOBOOK / REAL FLIPBOOK</small
+            ><b>速度被<br />留在一页里。</b>
+            <p>真实照片、真实日期、真实路线。</p>
+            <span class="open-book"
+              ><span>打开年度画册</span><span>CLICK / SWIPE</span></span
+            ></span
+          >
+        </button>
+      </section>
+      <section class="chapter" id="activities">
+        <div class="chapter-no">05 / 代表活动</div>
+        <h2>四次远行，<br />四个刻度。</h2>
+        <article class="ride">
+          <i>01 / 08月29日</i>
+          <h3>戒潭秒阳 Ride</h3>
+          <div class="ride-meta">
+            <b>175 km</b><span>2,217 m</span><span>28.7 km/h</span>
+          </div>
+        </article>
+        <article class="ride">
+          <i>02 / 07月25日</i>
+          <h3>松山 Ride</h3>
+          <div class="ride-meta">
+            <b>175 km</b><span>1,713 m</span><span>—</span>
+          </div>
+        </article>
+        <article class="ride">
+          <i>03 / 08月16日</i>
+          <h3>雨战百里画廊 Ride</h3>
+          <div class="ride-meta">
+            <b>161 km</b><span>1,952 m</span><span>—</span>
+          </div>
+        </article>
+        <article class="ride">
+          <i>04 / 09月05日</i>
+          <h3>密云 ride</h3>
+          <div class="ride-meta">
+            <b>131 km</b><span>1,488 m</span><span>31.0 km/h</span>
+          </div>
+        </article>
+      </section>
+      <section class="chapter" id="season">
+        <div class="chapter-no">06 / 驶向 2027</div>
+        <div class="season">
+          <div class="count">
+            <span>TO 2027-04-01</span><b class="data">156</b
+            ><strong>天 / 22 周</strong>
+          </div>
+          <div class="plan">
+            <span class="source ai">AI 生成区</span>
+            <h3>FTP 周期草案<br />尚未生成。</h3>
+            <p>模型建议不会伪装成生理测量，也不会在无人确认时进入日历。</p>
+            <div class="approval">
+              <div><i>ACT I</i><b>读取</b><span>定时任务只读</span></div>
+              <div><i>ACT II</i><b>确认</b><span>人工校验内容与哈希</span></div>
+              <div>
+                <i>ACT III</i><b>写入</b><span>独立审批工作流执行</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      独立个人项目，不隶属于或受 Strava, Inc. 赞助。<img
+        src="assets/strava/strava-white.svg"
+        alt="Strava"
+      />
+    </footer>
+    <div
+      id="album-viewer"
+      class="album-viewer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="album-title"
+      hidden
+    >
+      <div class="viewer-shell">
+        <div class="viewer-bar">
+          <div>
+            <b id="album-title">2026 年度画册</b
+            ><span>点击左右、拖动或月份导航翻页</span>
+          </div>
+          <button
+            id="close-album"
+            class="viewer-close"
+            type="button"
+            aria-label="关闭画册"
+          >
+            ×
+          </button>
+        </div>
+        <iframe
+          src="../books/2026/photobook/index.html"
+          title="2026 年度翻页画册"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </div>
+    <script src="assets/routes-2026.js"></script>
+    <script>
+      function decodePolyline(s) {
+        let i = 0,
+          lat = 0,
+          lng = 0,
+          pts = [];
+        while (i < s.length) {
+          let b,
+            shift = 0,
+            res = 0;
+          do {
+            b = s.charCodeAt(i++) - 63;
+            res |= (b & 31) << shift;
+            shift += 5;
+          } while (b >= 32);
+          lat += res & 1 ? ~(res >> 1) : res >> 1;
+          shift = 0;
+          res = 0;
+          do {
+            b = s.charCodeAt(i++) - 63;
+            res |= (b & 31) << shift;
+            shift += 5;
+          } while (b >= 32);
+          lng += res & 1 ? ~(res >> 1) : res >> 1;
+          pts.push([lat / 1e5, lng / 1e5]);
+        }
+        return pts;
+      }
+      const routeCanvas = document.querySelector("#route-heatmap"),
+        routeStatus = document.querySelector("#route-status"),
+        routeCount = document.querySelector("#route-count"),
+        routeStatCount = document.querySelector("#route-stat-count"),
+        routePointCount = document.querySelector("#route-point-count"),
+        routeData = Array.isArray(window.ROUTES_2026) ? window.ROUTES_2026 : [],
+        decodedRoutes = routeData
+          .map((route) => decodePolyline(route.polyline))
+          .filter((points) => points.length > 1),
+        allRoutePoints = decodedRoutes.flat();
+
+      function interpolateColor(level) {
+        const stops = [
+          [0, [101, 30, 10]],
+          [0.3, [229, 63, 18]],
+          [0.68, [255, 161, 61]],
+          [1, [255, 242, 211]],
+        ];
+        let next = stops.findIndex((stop) => level <= stop[0]);
+        if (next <= 0) return stops[0][1];
+        if (next < 0) return stops[stops.length - 1][1];
+        const before = stops[next - 1],
+          after = stops[next],
+          progress = (level - before[0]) / (after[0] - before[0]);
+        return before[1].map((value, index) =>
+          Math.round(value + (after[1][index] - value) * progress),
+        );
+      }
+
+      function traceRoute(context, points, project) {
+        context.beginPath();
+        points.forEach((point, index) => {
+          const [x, y] = project(point);
+          if (index) context.lineTo(x, y);
+          else context.moveTo(x, y);
+        });
+        context.stroke();
+      }
+
+      function drawRouteHeatmap() {
+        const bounds = routeCanvas.getBoundingClientRect();
+        if (!bounds.width || !bounds.height || !allRoutePoints.length) {
+          routeStatus.textContent =
+            "路线数据未加载；请确认 assets/routes-2026.js 可访问。";
+          return;
+        }
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2),
+          width = Math.round(bounds.width * dpr),
+          height = Math.round(bounds.height * dpr),
+          latitudes = allRoutePoints.map((point) => point[0]),
+          longitudes = allRoutePoints.map((point) => point[1]),
+          minLat = Math.min(...latitudes),
+          maxLat = Math.max(...latitudes),
+          minLng = Math.min(...longitudes),
+          maxLng = Math.max(...longitudes),
+          longitudeFactor = Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180),
+          minX = minLng * longitudeFactor,
+          maxX = maxLng * longitudeFactor,
+          mapWidth = maxX - minX || 1,
+          mapHeight = maxLat - minLat || 1,
+          padding = 27 * dpr,
+          scale = Math.min(
+            (width - padding * 2) / mapWidth,
+            (height - padding * 2) / mapHeight,
+          ),
+          offsetX = (width - mapWidth * scale) / 2,
+          offsetY = (height - mapHeight * scale) / 2,
+          project = ([lat, lng]) => [
+            offsetX + (lng * longitudeFactor - minX) * scale,
+            height - (offsetY + (lat - minLat) * scale),
+          ],
+          densityCanvas = document.createElement("canvas"),
+          colorCanvas = document.createElement("canvas");
+
+        routeCanvas.width = densityCanvas.width = colorCanvas.width = width;
+        routeCanvas.height = densityCanvas.height = colorCanvas.height = height;
+
+        const densityContext = densityCanvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+        densityContext.globalCompositeOperation = "lighter";
+        densityContext.strokeStyle = "rgba(255,255,255,.055)";
+        densityContext.lineWidth = 1.35 * dpr;
+        densityContext.lineCap = "round";
+        densityContext.lineJoin = "round";
+        decodedRoutes.forEach((points) =>
+          traceRoute(densityContext, points, project),
+        );
+
+        const densityPixels = densityContext.getImageData(0, 0, width, height),
+          colorContext = colorCanvas.getContext("2d"),
+          colorPixels = colorContext.createImageData(width, height);
+        for (let index = 0; index < densityPixels.data.length; index += 4) {
+          const density = densityPixels.data[index + 3] / 255;
+          if (!density) continue;
+          const level = Math.min(1, Math.pow(density / 0.62, 0.55)),
+            [red, green, blue] = interpolateColor(level);
+          colorPixels.data[index] = red;
+          colorPixels.data[index + 1] = green;
+          colorPixels.data[index + 2] = blue;
+          colorPixels.data[index + 3] = Math.round(92 + level * 163);
+        }
+        colorContext.putImageData(colorPixels, 0, 0);
+
+        const context = routeCanvas.getContext("2d");
+        context.clearRect(0, 0, width, height);
+        context.save();
+        context.globalAlpha = 0.38;
+        context.filter = "blur(" + 3 * dpr + "px)";
+        context.drawImage(colorCanvas, 0, 0);
+        context.restore();
+        context.drawImage(colorCanvas, 0, 0);
+
+        const routeTotal = decodedRoutes.length.toLocaleString("zh-CN"),
+          pointTotal = allRoutePoints.length.toLocaleString("zh-CN");
+        routeCount.textContent = routeStatCount.textContent = routeTotal;
+        routePointCount.textContent = pointTotal;
+        routeStatus.textContent =
+          routeTotal + " ROUTES / " + pointTotal + " POINTS / TRUE GPS TRACES";
+      }
+
+      let mapFrame = 0;
+      function scheduleRouteHeatmap() {
+        cancelAnimationFrame(mapFrame);
+        mapFrame = requestAnimationFrame(drawRouteHeatmap);
+      }
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(scheduleRouteHeatmap).observe(routeCanvas);
+      } else {
+        window.addEventListener("resize", scheduleRouteHeatmap);
+      }
+      scheduleRouteHeatmap();
+      const month = document.querySelector("#active-month"),
+        distance = document.querySelector("#active-distance"),
+        elevation = document.querySelector("#active-elevation"),
+        rides = document.querySelector("#active-rides"),
+        bars = [...document.querySelectorAll(".bar-option")];
+      function selectBar(button) {
+        bars.forEach((item) =>
+          item.setAttribute("aria-pressed", String(item === button)),
+        );
+        month.textContent = `${button.dataset.month}月 / DISTANCE`;
+        distance.textContent = button.dataset.distance;
+        elevation.textContent = `${button.dataset.elevation} m 爬升`;
+        rides.textContent = `${button.dataset.rides} 次骑行`;
+      }
+      bars.forEach((button) =>
+        button.addEventListener("click", () => selectBar(button)),
+      );
+      const viewer = document.querySelector("#album-viewer"),
+        openAlbum = document.querySelector("#open-album"),
+        closeAlbum = document.querySelector("#close-album");
+      let returnFocus = null;
+      function setAlbum(open) {
+        viewer.hidden = !open;
+        document.body.classList.toggle("viewer-open", open);
+        if (open) {
+          returnFocus = document.activeElement;
+          closeAlbum.focus();
+        } else {
+          returnFocus?.focus();
+        }
+      }
+      openAlbum.addEventListener("click", () => setAlbum(true));
+      closeAlbum.addEventListener("click", () => setAlbum(false));
+      viewer.addEventListener("click", (event) => {
+        if (event.target === viewer) setAlbum(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !viewer.hidden) setAlbum(false);
+      });
+    </script>
+  </body>
+</html>
