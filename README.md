@@ -1,25 +1,29 @@
-# 我的骑行数据 · Strava Photobook 🚲📖
+# 我的骑行数据 · Cycling Data Hub 🚲
 
-把你的 **Strava** 骑行数据做成一本可翻页的交互式照片画册，一年一本。电脑端双页展开，
-手机端自动切换单页；点击画册左/右区域可前后翻页，也支持拖动、方向键和月份跳转。
+把 **Strava** 骑行记录与可选的 **Intervals.icu** 训练数据汇总成一个响应式年度仪表盘，
+并把可翻页照片画册直接嵌入页面。电脑与手机共享同一套 Distance Manifesto 暗色视觉。
 
-> 📖 **在线画册（2026）**：<https://mengen-ink.github.io/strava-photobook-2026/>
+> 🚲 **在线仪表盘（2026）**：<https://mengen-ink.github.io/strava-photobook-2026/>
 > 源码仓库：<https://github.com/MengEn-Ink/strava-photobook-2026>
 
 响应式与阅读友好：窄屏（≤700px）自动折为单页并加宽文字栏、放大触控按钮（≥46px）、
 适配刘海/底部安全区；正文用容器相对单位（cqw），无论页面大小字号都等比、清晰。
 
-每本画册全部**直接从 Strava API 生成**，无需手动导出数据：
+站点在构建时从数据源取数，浏览器只读取无密钥的公开 JSON：
+
+- **单页仪表盘**：最近七天、年度柱状节奏、GitHub 式骑行日历、路线轨迹热图、纪录、目标、完整活动日志与详情。
+- **训练证据**：配置 Intervals.icu 后显示 CTL / ATL / TSB、FTP、功率曲线与装备里程；缺失时明确降级，不生成假数据。
+- **翻页画册**：在仪表盘中直接打开，也可访问 `photobook/`；电脑端双页、手机端单页。
 
 - **高光摄影海报封面**：自动从入册照片中选择年度代表横图，结合主题色、年份与核心数据；没有合适照片时自动退回年度路线海报。
 - **年度总结跨页**：用年度总里程、月份节奏、累计爬升、Kudos、PR 与最长单骑讲述这一年的骑行变化。
-- **年度活动热力图**：聚合当年 GPS 轨迹，重复路段自然加深，并随所选主题同步换色。
+- **年度活动热力图**：聚合当年 GPS 轨迹，重复路段自然加深，并使用统一的 Distance Manifesto 锈橙色阶。
 - **高光介绍页**：按「收藏最高 / 赛段 PR / 同行人数」挑选的代表骑行，含标题、描述、数据、
   当天刷出的赛段 PR，以及由 GPS 轨迹（polyline）解码而成的**矢量路线图**。
 - **照片画廊**：从 Strava 下载骑行照片。竖图满屏且零文字遮挡；横图完整显示，标题、日期、里程、爬升和照片说明放在独立信息区。
 
-视觉默认采用干净的**黑白橙编辑风**，并内置 18 组撞色，共 19 种主题。海报封面、年度总结、
-路线热力图和控制区会一起换色；点击浮在书页上的“主题”按钮即可即时切换并自动保存。
+画册只支持**唯一主题 Distance Manifesto**：深黑阅读环境、暗色书页、暖白文字与锈橙强调色统一覆盖海报封面、年度总结、
+路线热力图和控制区。页面不提供主题选择器，避免仪表盘与画册出现两套视觉语言。
 
 > 翻页运行时改编自 MIT 许可的
 > [create-photo-flipbook-ui](https://github.com/HaichaoLihc/create-photo-flipbook-ui)。
@@ -45,10 +49,13 @@ python -m strava_photobook years
 # 4. 生成某一年，照片直接从 Strava 下载。
 python -m strava_photobook build 2026
 
-# 5. 本地预览。
+# 5. 把仪表盘提升为站点根页，画册移入 photobook/，并生成公开 JSON。
+python -m strava_photobook build-dashboard 2026
+
+# 6. 本地预览。
 cd books/2026 && python -m http.server 4173 --bind 127.0.0.1
 
-# 6. 一次性 GitHub 授权，然后发布并等待 Pages 真正可访问。
+# 7. 一次性 GitHub 授权，然后发布并等待 Pages 真正可访问。
 python3 -m strava_photobook github-auth
 python3 -m strava_photobook publish 2026
 ```
@@ -59,8 +66,10 @@ python3 -m strava_photobook publish 2026
 |---|---|
 | `python -m strava_photobook auth` | 一键浏览器 OAuth 授权，把 refresh token 写入 `.env`。 |
 | `python -m strava_photobook fetch` | 拉取全部活动概要到 `data/activities.json`。 |
+| `python -m strava_photobook sync-intervals --year <年份>` | 可选：同步规范化的训练、装备与功率数据。 |
 | `strava_photobook years` | 列出年份及每年的骑行数、照片数。 |
 | `strava_photobook build <年份>` | 生成 `books/<年份>/`。 |
+| `strava_photobook build-dashboard <年份>` | 生成公开 JSON，把仪表盘设为根页并将画册移入 `photobook/`。 |
 | `python3 -m strava_photobook github-auth` | 浏览器授权 GitHub，token 安全写入 `.env`。 |
 | `python3 -m strava_photobook publish <年份>` | 建仓、上传、启用 Pages，并等待公网页面可打开。 |
 
@@ -70,10 +79,10 @@ python3 -m strava_photobook publish 2026
 官方浏览器授权。也可创建 GitHub OAuth App、启用 Device Flow，并配置公开的 `GITHUB_CLIENT_ID`，
 此时工具使用内置 Device Flow，不依赖 `gh`。自动化环境可直接注入 `GH_TOKEN`。
 
-默认创建公开仓库 `strava-photobook-<年份>`，只把生成后的静态画册写到 `gh-pages` 分支；
+默认创建公开仓库 `strava-photobook-<年份>`，只把生成后的静态站点写到 `gh-pages` 分支；
 `.env`、Strava token、`data/` 和项目源码不会被上传。可以用 `--repo NAME` 自定义仓库名。
-同名仓库必须带有本工具标记，否则命令会拒绝覆盖。只有 Pages 构建成功，且公网 HTML
-可访问并包含画册标记，命令才会返回成功。
+发布根页是仪表盘，翻页画册位于 `photobook/`，公开数据位于 `data/metrics.json`、
+`data/activities.json` 与 `data/routes.json`。同名仓库必须带有本工具标记，否则命令会拒绝覆盖。
 
 ## 准备 Strava 应用
 
@@ -89,12 +98,16 @@ python3 -m strava_photobook publish 2026
 ## 工作原理
 
 ```
-Strava API
+Strava API ───────────────┐
   ├── /athlete/activities        概要：收藏、PR、同行人、轨迹   ──► data/activities.json
   ├── /activities/{id}           赛段 PR + 描述        （仅高光骑行）
   └── /activities/{id}/photos    原图照片 URL          （入册骑行）
-                                              │
-                        筛选高光 ──► 生成 ──► books/<年份>/index.html
+Intervals.icu（可选）─────┤ 训练负荷 / FTP / 功率 / 装备（规范化缓存）
+                          ▼
+                    构建静态站点
+                          ├── books/<年份>/index.html             仪表盘
+                          ├── books/<年份>/data/*.json            公开数据
+                          └── books/<年份>/photobook/index.html   翻页画册
 ```
 
 概要请求很省（每约 200 条一次），全量历史几秒缓存完；较贵的逐条请求（PR 赛段、照片下载）
@@ -112,10 +125,13 @@ strava-photobook/
 │   ├── theme.py               # 介绍页布局 + 黑白主题
 │   ├── book.py                # 编排单年画册
 │   ├── source.py              # 从 Strava API 取数据与照片
+│   ├── dashboard.py           # 公开 JSON 与生产站点装配
+│   ├── metrics.py             # KPI / Eddington / CTL / ATL / TSB 等纯函数
+│   ├── intervals/             # Intervals.icu 只读同步与安全规范化
 │   └── strava/                # 自带 OAuth 客户端 + 本地授权服务
-├── tools/                     # 门禁：layout_gate.py（布局校验）
-├── runtime/                   # 翻页运行时（HTML/JS/CSS + StPageFlip）
-├── books/                     # 产出，一年一本（已 gitignore）
+├── tools/                     # 画册布局、发布完整性与 Dashboard 安全门禁
+├── runtime/                   # 翻页运行时 + Distance Manifesto Dashboard
+├── books/                     # 产出，一年一个静态站点（已 gitignore）
 └── data/                      # API 缓存 + token（已 gitignore）
 ```
 
@@ -138,6 +154,8 @@ strava-photobook/
 | `GITHUB_CLIENT_ID` | 可选；启用 Device Flow 的 GitHub OAuth App Client ID | — |
 | `GITHUB_TOKEN` | `github-auth` 保存的 GitHub token | — |
 | `GH_TOKEN` | 自动化 token，优先于 `GITHUB_TOKEN` | — |
+| `INTERVALS_API_KEY` | 可选；Intervals.icu 只读 API Key | — |
+| `INTERVALS_ATHLETE_ID` | 可选；Intervals.icu athlete ID | `0` |
 
 ### 入册照片数（动态）
 
@@ -152,23 +170,26 @@ strava-photobook/
 把剩余名额逐张补足，单次活动最多 `PHOTOBOOK_MAX_PHOTOS_PER_RIDE`（默认 6）张，避免一次活动刷屏。
 需要回到固定数量时，设置 `PHOTOBOOK_PHOTOS_PER_BOOK` 即可强制覆盖（逃生舱）。
 
-### 换主题
+### 固定主题
 
-打开画册后点击浮在书页上的“主题”按钮，从双色色板中选择。默认是“黑白橙（默认）”；选择不会改变
-当前页，并会自动保存到浏览器的 `strava-photobook.theme`。要恢复默认，重新选择“黑白橙
-（默认）”，也可以在浏览器开发者工具中清除这个 localStorage 键。
+画册固定使用唯一主题 Distance Manifesto：深黑环境承载翻页舞台，暗色书页配暖白文字，锈橙用于路线、焦点和当前月份。
+主题不接受查询参数覆盖，也不写入浏览器偏好；从仪表盘打开或直接访问画册都保持同一套视觉。
 
 ## 门禁检测
 
-两道校验，改样式或生成后跑一遍：
+三类校验，改样式或生成后跑一遍：
 
 ```bash
 # 1) 布局门禁（静态、秒级）：断言高光页「文字左栏 / 轨迹右下角」分栏不重叠、
 #    轨迹颜色足够浅、关键文字类都有样式。改 theme.py 后必跑。
 python -m tools.layout_gate
 
-# 2) 运行时契约（生成后）：校验翻页书结构、封面密度、页尺寸、资源就位。
-cd books/<年份> && node --test html-contract.test.mjs
+# 2) 运行时契约（生成后）：校验仪表盘和翻页书结构、响应式排版、资源就位。
+node --test runtime/dashboard/*.test.mjs
+node --test books/<年份>/photobook/html-contract.test.mjs
+
+# 3) 发布门禁：校验根页、嵌套画册、三份公开 JSON、占位符与敏感字段。
+python tools/validate_dashboard.py books/<年份>
 ```
 
 布局门禁把「文字栏右边界不得越过轨迹栏左边界」这条几何不变量固化下来——只要成立，
@@ -188,11 +209,12 @@ cd books/<年份> && node --test html-contract.test.mjs
    `data/photo-cache`——既作为照片下载缓存，也作为发布前的回归对比基线。
 3. **拉取当年活动**：执行 `fetch --year <年份>`。若撞上 Strava 限流（每 15 分钟一个固定
    配额窗口），会等待到下一个窗口后自动重试一次。
-4. **构建画册**：`build <年份>` 重新生成当年静态画册。
-5. **发布前校验**：依次运行 Python 单测、运行时与画册的 Node 契约测试、布局门禁、照片
+4. **同步训练数据（可选）**：配置 Intervals Secrets 后执行只读同步；缺失或失败时保留明确降级状态。
+5. **构建站点**：先执行 `build <年份>` 生成画册，再执行 `build-dashboard <年份>` 生成根仪表盘与公开 JSON。
+6. **发布前校验**：依次运行 Python 单测、运行时与画册的 Node 契约测试、布局门禁、照片
    布局门禁，以及对照线上基线的 `validate_release`（校验画册标记、封面 / 年度总结 / 热力图、
-   无空白衬页与内部页码、资源齐全、照片数无显著回落）。任一失败即中止，旧页面保持不变。
-6. **原子发布**：全部通过后，用临时 worktree 清空 `gh-pages` 旧内容并拷入新画册；没有变化
+   无空白衬页与内部页码、资源齐全、照片数无显著回落），以及根站点 `validate_dashboard` 安全门禁。
+7. **原子发布**：全部通过后，用临时 worktree 清空 `gh-pages` 旧内容并拷入新站点；没有变化
    则不产生提交，有变化才提交 `Publish nightly Strava photobook` 并推送，Pages 随之更新。
 
 首次启用时，在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 创建：
@@ -201,6 +223,7 @@ cd books/<年份> && node --test html-contract.test.mjs
 - `STRAVA_CLIENT_SECRET`：Strava 应用 Client Secret
 - `STRAVA_REFRESH_TOKEN`：执行本地 `auth` 后 `.env` 中的刷新令牌
 - `SECRETS_ADMIN_TOKEN`：能管理本仓库 Actions Secrets 并推送分支的 GitHub token
+- `INTERVALS_API_KEY` / `INTERVALS_ATHLETE_ID`：可选；不配置时训练区块诚实降级，仍会发布
 
 动态画册以本次构建声明的目标张数为准：实际入册达到目标的 **90%** 即发布（容忍个别图片下载失败），
 目标本身随上传量增删，不再与线上旧版本比张数；未声明动态目标的旧画册仍沿用发布基线的 **5% 容差**
@@ -210,8 +233,9 @@ cd books/<年份> && node --test html-contract.test.mjs
 
 ## 隐私
 
-全程在本机运行。照片、活动数据、凭证都不会离开你的电脑。`.env`、`data/`、`books/`
-均已 gitignore，不会提交任何个人数据。
+取数与构建在本机或 GitHub Actions 内完成，API 凭证只来自 `.env` / Actions Secrets，绝不写入成品。
+发布是公开行为：生成后的照片、活动标题、日期、路线与汇总指标会出现在 Pages；发布前请确认接受公开范围。
+源码仓库仍忽略 `.env`、原始 `data/` 与本地 `books/`。
 
 ## 许可
 

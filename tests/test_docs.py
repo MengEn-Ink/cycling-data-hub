@@ -11,11 +11,12 @@ class BeginnerDocsTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
 
-    def test_docs_explain_theme_switching_and_reset(self):
+    def test_docs_explain_the_fixed_distance_manifesto_theme(self):
         setup = Path("docs/setup.md").read_text("utf-8")
         readme = Path("README.md").read_text("utf-8")
-        for phrase in ("19 种主题", "黑白橙", "自动保存", "strava-photobook.theme"):
+        for phrase in ("唯一主题", "Distance Manifesto", "暗色书页", "暖白", "锈橙"):
             self.assertIn(phrase, setup + readme)
+        self.assertNotIn("strava-photobook.theme", setup + readme)
 
     def test_docs_explain_nightly_github_actions_setup(self):
         text = Path("README.md").read_text("utf-8") + Path("docs/setup.md").read_text("utf-8")
@@ -23,6 +24,14 @@ class BeginnerDocsTests(unittest.TestCase):
             "每天 21:00", "nightly-photobook.yml", "STRAVA_CLIENT_ID",
             "STRAVA_CLIENT_SECRET", "STRAVA_REFRESH_TOKEN", "SECRETS_ADMIN_TOKEN",
             "workflow_dispatch",
+        ):
+            self.assertIn(phrase, text)
+
+    def test_docs_explain_root_dashboard_and_optional_training_source(self):
+        text = Path("README.md").read_text("utf-8") + Path("docs/setup.md").read_text("utf-8")
+        for phrase in (
+            "build-dashboard 2026", "根页", "photobook/", "data/metrics.json",
+            "INTERVALS_API_KEY", "明确降级", "validate_dashboard.py",
         ):
             self.assertIn(phrase, text)
 

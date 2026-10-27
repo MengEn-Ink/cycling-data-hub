@@ -22,6 +22,8 @@ jobs:
       STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
       STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
       SECRETS_ADMIN_TOKEN: ${{ secrets.SECRETS_ADMIN_TOKEN }}
+      INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
+      INTERVALS_ATHLETE_ID: ${{ secrets.INTERVALS_ATHLETE_ID }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,14 +54,20 @@ jobs:
         run: |
           previous_root="$(mktemp -d)"
           previous_dir="$previous_root/site"
-          echo "PREVIOUS_BOOK=$previous_dir" >> "$GITHUB_ENV"
+          previous_book="$previous_dir"
+          previous_photos="$previous_dir/assets/photos"
+          mkdir -p data/photo-cache
           if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
             git worktree add --detach "$previous_dir" origin/gh-pages
-            mkdir -p data/photo-cache
-            if test -d "$previous_dir/assets/photos"; then
-              find "$previous_dir/assets/photos" -type f -name '*.jpg' ! -name 'athlete.jpg' -exec cp {} data/photo-cache/ \;
+            if test -d "$previous_dir/photobook"; then
+              previous_book="$previous_dir/photobook"
+              previous_photos="$previous_dir/photobook/assets/photos"
+            fi
+            if test -d "$previous_photos"; then
+              find "$previous_photos" -type f -name '*.jpg' ! -name 'athlete.jpg' -exec cp {} data/photo-cache/ \;
             fi
           fi
+          echo "PREVIOUS_BOOK=$previous_book" >> "$GITHUB_ENV"
 
       - name: Fetch current Strava activities
         id: fetch
@@ -98,19 +106,28 @@ jobs:
           python -c 'import json; print(json.load(open("data/.strava_token.json"))["refresh_token"])' \
             | gh secret set STRAVA_REFRESH_TOKEN --repo "$GITHUB_REPOSITORY"
 
+      - name: Sync optional Intervals.icu training data
+        if: env.FETCH_OK == 'true' && env.INTERVALS_API_KEY != ''
+        continue-on-error: true
+        run: python -m strava_photobook sync-intervals --year "$BOOK_YEAR"
+
       - name: Build current-year photobook
         if: env.FETCH_OK == 'true'
-        run: python -m strava_photobook build "$BOOK_YEAR"
+        run: |
+          python -m strava_photobook build "$BOOK_YEAR"
+          python -m strava_photobook build-dashboard "$BOOK_YEAR"
 
       - name: Test and validate before publishing
         if: env.FETCH_OK == 'true'
         run: |
           python -m unittest discover -v
           node --test runtime/*.test.mjs
-          node --test "books/$BOOK_YEAR/html-contract.test.mjs"
+          node --test runtime/dashboard/*.test.mjs
+          node --test "books/$BOOK_YEAR/photobook/html-contract.test.mjs"
           python -m tools.layout_gate
-          python tools/photo_layout_gate.py "books/$BOOK_YEAR/index.html"
-          python tools/validate_release.py "books/$BOOK_YEAR" --baseline "$PREVIOUS_BOOK" --require-heatmap
+          python tools/photo_layout_gate.py "books/$BOOK_YEAR/photobook/index.html"
+          python tools/validate_release.py "books/$BOOK_YEAR/photobook" --baseline "$PREVIOUS_BOOK" --require-heatmap
+          python tools/validate_dashboard.py "books/$BOOK_YEAR"
 
       - name: Publish gh-pages atomically
         if: env.FETCH_OK == 'true'
