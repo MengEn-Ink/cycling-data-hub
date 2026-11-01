@@ -1,5 +1,22 @@
 [
  {
+  "id": "20812311758",
+  "name": "白羊沟 阳坊涮肉ride",
+  "date": "2026-11-01",
+  "sport_type": "Ride",
+  "distance_km": 91.4,
+  "elev_m": 926,
+  "moving_seconds": 12643,
+  "avg_speed_kmh": 26.0,
+  "kudos": 39,
+  "comments": 2,
+  "athletes": 1,
+  "pr_count": 0,
+  "achievements": 0,
+  "photo_count": 5,
+  "polyline": "uavsFqexdUoY~RiWfNcHlGcIbKeb@`o@sHvNkS~Za]bZuEtB{Ez@_q@j@iJrBkl@hb@{c@z^anBvhA}IpBiFEuGqCoEuGaARB|MrEtc@UxH`BtZhApEpEvHt@nFy@pHoFrHqAvE`Clw@_AvE_FhHi@`El@bFrHjOt@|DrLlpE{@pDuYzh@_AbFa@`gADfLb@|BF|bAiFxd@lAre@u@~@_q@zV[~@fP~yCxP|iB|Ll{A?rA}@pB\\n@dBDEv@b@o@lAb@kA`N_Wn|@_JxUwJ~R}PxU_IpVwIdKgCvLeFrIeLrWmE`NsGbEyL{AuIfFgD`EqAnHp@lKt@zCvDjCXfDsFxL_IbK}EpKeChJIzGi@jCkBhDw@nDqCdAoMv^wJ`EuJiAwQvGwBzCAdKs@tBoC~@oGuBaIXeHtHwGlLuI~IeHb@}LfCyLm@gEjAgKtHqF|BcASaB{CyAaAiFv@eDvEyC`BgAtBoCpT{CbG?bFmBWsHpFaCjG[oBkAzBPmCgBlFGgAmC`F{AhAoBbPvD`EtChOrIpGdDrG}Bb^uAnKN`Gx@hD}AnDcB|McA~WmAjH`@nGnCvHJdF~DhEzFbK|CLzMyBpBcC|A}ErBeApBbAlBtEfGxBjEy@tQTnBeAdBeFjCs@hClAvDQvC~BpADtLcHrDy@bEuGjGcBxJ`FdKjCbD_@`JtAzHbDxBxBmB}BiIiDwIoAkDXgKiC{JwEoGdB{DjGmDx@_M~GqAIoCwBuDHsCgAqCx@wArEeBhAaRMkEv@gGyB{B_FoBu@eBx@cBfFgClCqMrBeDe@gFqJ_EoEEqEmCyHe@aHnA{GdA_X~AoM~AaEw@}CQ{FrAcLzBc^kDyGeIaGwCeOyDmEhBoOdFuHL|@`BcFIlCbA{BZhBjCgGdHgF~BDA{EnDmIrBcRnAaCfDgBxCkEdFm@xD~EpAJjF}BpJmHtDiAfMh@nLeClIo@bImIjHeM|GkH|HY`GpB`D{@t@qBAeKdCgDdJeCxEiCbKjApJ{DpM__@pCiBrDcJf@eKbC{I|EoKhHaJhGaN[sDoDeCu@oCu@cKnAyHvCuDnIeFxLnAfHkEbEoMvLsXxE{HnCcMvIgKpHwUrQ_WxJiSpI_UhVaz@hBqP}BqAk@cCyJooAwRevBePi}CxzCijAfZaIzJuAxo@gOlMZnWhCvQa@t@c@X{KVk`AnA}JtPqu@lE}v@~Igk@vAadBrPmeBhLyeBp@if@cCss@K}NBuiBp@gNm@_JaEqSvR{ObIkJzYsb@jq@}_A~J}GtNaFr^uW"
+ },
+ {
   "id": "20799181660",
   "name": "G110 南山环线根本不冷 🥶ride",
   "date": "2026-10-31",
@@ -8,7 +25,7 @@
   "elev_m": 1385,
   "moving_seconds": 14188,
   "avg_speed_kmh": 32.5,
-  "kudos": 36,
+  "kudos": 37,
   "comments": 0,
   "athletes": 1,
   "pr_count": 1,
