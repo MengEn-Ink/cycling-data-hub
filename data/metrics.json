@@ -1,13 +1,14 @@
 {
  "kpis": {
-  "rides": 142,
-  "distance_km": 9655.8,
-  "elev_m": 81248,
-  "moving_seconds": 1086215,
-  "kudos": 5653,
+  "rides": 143,
+  "distance_km": 9702.1,
+  "elev_m": 81576,
+  "moving_seconds": 1091650,
+  "kudos": 5674,
   "longest_km": 175.0
  },
  "calendar": {
+  "2026-11-06": 46.3,
   "2026-11-04": 37.9,
   "2026-11-01": 91.4,
   "2026-10-31": 128.3,
@@ -1638,6 +1639,20 @@
    "ctl": 9.9,
    "atl": 0.1,
    "tsb": 10.1
+  },
+  {
+   "date": "2026-11-05",
+   "load": 0.0,
+   "ctl": 9.7,
+   "atl": 0.0,
+   "tsb": 9.9
+  },
+  {
+   "date": "2026-11-06",
+   "load": 0.0,
+   "ctl": 9.5,
+   "atl": 0.0,
+   "tsb": 9.7
   }
  ],
  "ftp_trend": [
@@ -1712,7 +1727,7 @@
   {
    "id": "b16731751",
    "name": "是极光色的SEKA SPEAR",
-   "distance_km": 12778.5
+   "distance_km": 12786.8
   },
   {
    "id": "b3914696",
@@ -2678,8 +2693,8 @@
   ]
  },
  "season": {
-  "days": 147,
-  "weeks": 21,
+  "days": 146,
+  "weeks": 20,
   "started": false,
   "season_start": "2027-04-01"
  },
