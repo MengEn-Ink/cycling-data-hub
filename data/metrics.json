@@ -4,7 +4,7 @@
   "distance_km": 9766.0,
   "elev_m": 81948,
   "moving_seconds": 1099010,
-  "kudos": 5711,
+  "kudos": 5714,
   "longest_km": 175.0
  },
  "calendar": {
@@ -2750,7 +2750,7 @@
   ]
  },
  "season": {
-  "days": 138,
+  "days": 137,
   "weeks": 19,
   "started": false,
   "season_start": "2027-04-01"
