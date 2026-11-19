@@ -1,5 +1,22 @@
 [
  {
+  "id": "21041554324",
+  "name": "晨间骑行",
+  "date": "2026-11-19",
+  "sport_type": "Ride",
+  "distance_km": 0.0,
+  "elev_m": 0,
+  "moving_seconds": 5766,
+  "avg_speed_kmh": 0.0,
+  "kudos": 17,
+  "comments": 0,
+  "athletes": 1,
+  "pr_count": 0,
+  "achievements": 0,
+  "photo_count": 0,
+  "polyline": ""
+ },
+ {
   "id": "21028812815",
   "name": "MyWhoosh - Al Wathba-L",
   "date": "2026-11-18",
@@ -8,7 +25,7 @@
   "elev_m": 94,
   "moving_seconds": 5407,
   "avg_speed_kmh": 32.9,
-  "kudos": 18,
+  "kudos": 20,
   "comments": 0,
   "athletes": 1,
   "pr_count": 1,
