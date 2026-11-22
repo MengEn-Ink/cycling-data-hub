@@ -1,5 +1,22 @@
 [
  {
+  "id": "21081800758",
+  "name": "MyWhoosh - Bhutan Outer Loop",
+  "date": "2026-11-22",
+  "sport_type": "VirtualRide",
+  "distance_km": 51.0,
+  "elev_m": 794,
+  "moving_seconds": 7209,
+  "avg_speed_kmh": 25.5,
+  "kudos": 18,
+  "comments": 0,
+  "athletes": 1,
+  "pr_count": 3,
+  "achievements": 6,
+  "photo_count": 2,
+  "polyline": "gsweDykwfPqJxAyNuA{B}BSmDjE}GsBaGh@wEbC}AlGf@|CeOD}FuCkG~CiFN}CgCqCyHbAoUkUiJeS_Ee@uJlE}EcAoQIoFnCm@pC|AbAI~AjDlA}IxBU`FvEr@IjB}GuBUkInBaBaByDaJhBuEhFkAqFgCtD{AgF_F|B{Ac@~@iDcCoA~@gDmBcFdA[vCdAV_FdBmDnB`D`Er@p@sEcFmGuAiG{DcE~Cc@rBgAvBh@BgAoEaByFH_B_DeFUpEiFkBkO`CaNpSuTjSoLhMeDFcCvCmB|BxCjDq@vD_CnEk@x@mD|Db@xB}BfEZtAcEtIvC`EpFdIsAdAgEhCbDvHw@jFn@jFpDhBdFtEnD~EiBbB|HbJ_B|Cz@|A]fDdBrAc@rBzBbB~GrGnDzZlBlDvClCbFw@~DiIp@kCpD{HZgDxEwEbBC~K~CR^xEbL|@j@vEoCbCyW@aD`BYdCt@vB|HdAjBfC{@tEcHxADxKbIfGRhDkB|ByAzGcItBkDfIaH~CmApCIrWlLFhEfA|BvGfDbCHzCkCjB}EoBsB`@cAfBPvFaApCiKvB_FxGyD~@gDk@yEcGaD}A_MnAmNsAuB_Be@gElE{GoBwFZuExBoB`Hd@vCuNFuGqC{F~CoFP{CcCsCiIx@aU_UeJeSeEi@sJlE{EcA}QI}EfCs@bDxAv@LzBrCt@yItBYbF~Ez@ObB_HuBUkInBaBcByD}IhBwEhFiAqFmCtDwAgFyEzBaBa@~@gDiCaBdAwCkBeF~Ef@PwEfBsDhB`D`Ev@v@yEaFeGyAoGyDaEXu@zBRzBiAtBj@HgAsEcByFHsA{CoFYtEwFoBuMzA_LfCyFdXcVzKuFxL{CLcCvCsB~BvCfEw@|CuBpEm@z@oDbDf@vC_CdEVpA_EnIrCxDrFpIqA~@eEbC~CjHw@hGr@dFnDjBhFfEdDnFaBxAxH`CHvFgBxBx@|BWdC|ApB]~A~AnBzH`HrDxP\\lIvAvGfIe@zEeB~@aFIwCvDkHPmD~EwDt@m@fAHrKzCP^tEfKb@hA`Cc@jD}BdA_YFgCxCdAjErHz@~AnBi@|EqHhBJdLzHrFN|DgBpByAxGeItBwCrHyHvDiAbDC|VjLDhEfA`CzGhDhCBpCcCjBcFoB{Bd@}@bBPvFaApC{K`CqFfH}GNoGkHeDoA}KtAwNsAkBuAo@iEnEkHsBgG^_EbBkBjHn@hDuO@iGqC}F~CeFN}CgCsC{FpAkA[}TyTuIyRwEu@iJlEeFcAaREwF|CWzBzA`AL|BpC`AcJbC`@hBm@dBnEj@PdBeHyASsF"
+ },
+ {
   "id": "21070122879",
   "name": "MyWhoosh - Heart of Switzerland",
   "date": "2026-11-21",
@@ -8,7 +25,7 @@
   "elev_m": 455,
   "moving_seconds": 11345,
   "avg_speed_kmh": 31.8,
-  "kudos": 17,
+  "kudos": 26,
   "comments": 0,
   "athletes": 1,
   "pr_count": 2,
